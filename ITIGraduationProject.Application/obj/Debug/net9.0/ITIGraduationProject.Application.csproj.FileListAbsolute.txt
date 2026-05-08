@@ -1,0 +1,11 @@
+F:\NewOneWithIti\ITIGraduationProject\ITIGraduationProject.Application\bin\Debug\net9.0\ITIGraduationProject.Application.deps.json
+F:\NewOneWithIti\ITIGraduationProject\ITIGraduationProject.Application\bin\Debug\net9.0\ITIGraduationProject.Application.dll
+F:\NewOneWithIti\ITIGraduationProject\ITIGraduationProject.Application\bin\Debug\net9.0\ITIGraduationProject.Application.pdb
+F:\NewOneWithIti\ITIGraduationProject\ITIGraduationProject.Application\obj\Debug\net9.0\ITIGraduationProject.Application.GeneratedMSBuildEditorConfig.editorconfig
+F:\NewOneWithIti\ITIGraduationProject\ITIGraduationProject.Application\obj\Debug\net9.0\ITIGraduationProject.Application.AssemblyInfoInputs.cache
+F:\NewOneWithIti\ITIGraduationProject\ITIGraduationProject.Application\obj\Debug\net9.0\ITIGraduationProject.Application.AssemblyInfo.cs
+F:\NewOneWithIti\ITIGraduationProject\ITIGraduationProject.Application\obj\Debug\net9.0\ITIGraduationProject.Application.csproj.CoreCompileInputs.cache
+F:\NewOneWithIti\ITIGraduationProject\ITIGraduationProject.Application\obj\Debug\net9.0\ITIGraduationProject.Application.dll
+F:\NewOneWithIti\ITIGraduationProject\ITIGraduationProject.Application\obj\Debug\net9.0\refint\ITIGraduationProject.Application.dll
+F:\NewOneWithIti\ITIGraduationProject\ITIGraduationProject.Application\obj\Debug\net9.0\ITIGraduationProject.Application.pdb
+F:\NewOneWithIti\ITIGraduationProject\ITIGraduationProject.Application\obj\Debug\net9.0\ref\ITIGraduationProject.Application.dll
