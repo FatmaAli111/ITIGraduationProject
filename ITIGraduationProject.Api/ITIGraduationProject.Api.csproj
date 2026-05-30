@@ -1,9 +1,20 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="Controllers\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ITIGraduationProject.Application\ITIGraduationProject.Application.csproj" />
+    <ProjectReference Include="..\ITIGraduationProject.DAL\ITIGraduationProject.Domain.csproj" />
+    <ProjectReference Include="..\ITIGraduationProject.Infrastructure\ITIGraduationProject.Infrastructure.csproj" />
+    <ProjectReference Include="..\ITIGraduationProject.Service\ITIGraduationProject.Service.csproj" />
+  </ItemGroup>
 
 </Project>

@@ -9,3 +9,5 @@ F:\NewOneWithIti\ITIGraduationProject\ITIGraduationProject.DAL\obj\Debug\net9.0\
 F:\NewOneWithIti\ITIGraduationProject\ITIGraduationProject.DAL\obj\Debug\net9.0\refint\ITIGraduationProject.Domain.dll
 F:\NewOneWithIti\ITIGraduationProject\ITIGraduationProject.DAL\obj\Debug\net9.0\ITIGraduationProject.Domain.pdb
 F:\NewOneWithIti\ITIGraduationProject\ITIGraduationProject.DAL\obj\Debug\net9.0\ref\ITIGraduationProject.Domain.dll
+F:\NewOneWithIti\ITIGraduationProject\ITIGraduationProject.DAL\obj\Debug\net9.0\ITIGraduationProject.Domain.sourcelink.json
+F:\NewOneWithIti\ITIGraduationProject\ITIGraduationProject.DAL\obj\Debug\net9.0\ITIGraduationProject.Domain.csproj.AssemblyReference.cache

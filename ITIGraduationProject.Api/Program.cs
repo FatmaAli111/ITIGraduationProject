@@ -1,3 +1,7 @@
+using ITIGraduationProject.Application;
+using ITIGraduationProject.Infrastructure;
+using ITIGraduationProject.Service;
+
 namespace ITIGraduationProject.Api
 {
     public class Program
@@ -9,6 +13,11 @@ namespace ITIGraduationProject.Api
             // Add services to the container.
 
             builder.Services.AddControllers();
+
+            //Add Module Dependencies
+            builder.Services.AddServiceModuleDependencies();
+            builder.Services.AddInfrastructureModuleDependencies();
+            builder.Services.AddApplicationModuleDependencies();
 
             var app = builder.Build();
 
