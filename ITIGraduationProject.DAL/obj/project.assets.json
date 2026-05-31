@@ -2,6 +2,22 @@
   "version": 3,
   "targets": {
     "net9.0": {
+      "Microsoft.AspNetCore.Http.Features/2.3.9": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.Extensions.Primitives": "8.0.0"
+        },
+        "compile": {
+          "lib/netstandard2.0/Microsoft.AspNetCore.Http.Features.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/netstandard2.0/Microsoft.AspNetCore.Http.Features.dll": {
+            "related": ".xml"
+          }
+        }
+      },
       "Microsoft.EntityFrameworkCore/9.0.16": {
         "type": "package",
         "dependencies": {
@@ -196,6 +212,19 @@
     }
   },
   "libraries": {
+    "Microsoft.AspNetCore.Http.Features/2.3.9": {
+      "sha512": "nDWDF0YBgElg6f0omqJ8DupmITQg5p4lklBxFpVR83tQQhOG2tw9Fa5ul8b+KywsYBsyfn9DschUmfzOV6RvGw==",
+      "type": "package",
+      "path": "microsoft.aspnetcore.http.features/2.3.9",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "lib/netstandard2.0/Microsoft.AspNetCore.Http.Features.dll",
+        "lib/netstandard2.0/Microsoft.AspNetCore.Http.Features.xml",
+        "microsoft.aspnetcore.http.features.2.3.9.nupkg.sha512",
+        "microsoft.aspnetcore.http.features.nuspec"
+      ]
+    },
     "Microsoft.EntityFrameworkCore/9.0.16": {
       "sha512": "vNtlfSJu4dQy3iMBib654PrhoZFOEoy8smSNQyrvhDXhKObiRG/sP50831hUXCNhNWNYZHHHCOknys/m+Rgkog==",
       "type": "package",
@@ -534,6 +563,7 @@
   },
   "projectFileDependencyGroups": {
     "net9.0": [
+      "Microsoft.AspNetCore.Http.Features >= 2.3.9",
       "Microsoft.EntityFrameworkCore >= 9.0.16"
     ]
   },
@@ -588,6 +618,10 @@
       "net9.0": {
         "targetAlias": "net9.0",
         "dependencies": {
+          "Microsoft.AspNetCore.Http.Features": {
+            "target": "Package",
+            "version": "[2.3.9, )"
+          },
           "Microsoft.EntityFrameworkCore": {
             "target": "Package",
             "version": "[9.0.16, )"

@@ -1,9 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "2pC+o6Dq4QM=",
+  "dgSpecHash": "ekhWvYkDm+E=",
   "success": true,
   "projectFilePath": "F:\\NewOneWithIti\\ITIGraduationProject\\ITIGraduationProject.DAL\\ITIGraduationProject.Domain.csproj",
   "expectedPackageFiles": [
+    "C:\\Users\\AB\\.nuget\\packages\\microsoft.aspnetcore.http.features\\2.3.9\\microsoft.aspnetcore.http.features.2.3.9.nupkg.sha512",
     "C:\\Users\\AB\\.nuget\\packages\\microsoft.entityframeworkcore\\9.0.16\\microsoft.entityframeworkcore.9.0.16.nupkg.sha512",
     "C:\\Users\\AB\\.nuget\\packages\\microsoft.entityframeworkcore.abstractions\\9.0.16\\microsoft.entityframeworkcore.abstractions.9.0.16.nupkg.sha512",
     "C:\\Users\\AB\\.nuget\\packages\\microsoft.entityframeworkcore.analyzers\\9.0.16\\microsoft.entityframeworkcore.analyzers.9.0.16.nupkg.sha512",

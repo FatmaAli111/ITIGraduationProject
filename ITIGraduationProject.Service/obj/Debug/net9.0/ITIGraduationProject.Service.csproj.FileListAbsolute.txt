@@ -5,6 +5,7 @@ F:\NewOneWithIti\ITIGraduationProject\ITIGraduationProject.Service\obj\Debug\net
 F:\NewOneWithIti\ITIGraduationProject\ITIGraduationProject.Service\obj\Debug\net9.0\ITIGraduationProject.Service.csproj.CoreCompileInputs.cache
 F:\NewOneWithIti\ITIGraduationProject\ITIGraduationProject.Service\obj\Debug\net9.0\ITIGraduationProject.Service.sourcelink.json
 F:\NewOneWithIti\ITIGraduationProject\ITIGraduationProject.Service\bin\Debug\net9.0\ITIGraduationProject.Service.deps.json
+F:\NewOneWithIti\ITIGraduationProject\ITIGraduationProject.Service\bin\Debug\net9.0\ITIGraduationProject.Service.runtimeconfig.json
 F:\NewOneWithIti\ITIGraduationProject\ITIGraduationProject.Service\bin\Debug\net9.0\ITIGraduationProject.Service.dll
 F:\NewOneWithIti\ITIGraduationProject\ITIGraduationProject.Service\bin\Debug\net9.0\ITIGraduationProject.Service.pdb
 F:\NewOneWithIti\ITIGraduationProject\ITIGraduationProject.Service\bin\Debug\net9.0\ITIGraduationProject.Domain.dll
@@ -15,4 +16,5 @@ F:\NewOneWithIti\ITIGraduationProject\ITIGraduationProject.Service\obj\Debug\net
 F:\NewOneWithIti\ITIGraduationProject\ITIGraduationProject.Service\obj\Debug\net9.0\ITIGraduationProject.Service.dll
 F:\NewOneWithIti\ITIGraduationProject\ITIGraduationProject.Service\obj\Debug\net9.0\refint\ITIGraduationProject.Service.dll
 F:\NewOneWithIti\ITIGraduationProject\ITIGraduationProject.Service\obj\Debug\net9.0\ITIGraduationProject.Service.pdb
+F:\NewOneWithIti\ITIGraduationProject\ITIGraduationProject.Service\obj\Debug\net9.0\ITIGraduationProject.Service.genruntimeconfig.cache
 F:\NewOneWithIti\ITIGraduationProject\ITIGraduationProject.Service\obj\Debug\net9.0\ref\ITIGraduationProject.Service.dll
