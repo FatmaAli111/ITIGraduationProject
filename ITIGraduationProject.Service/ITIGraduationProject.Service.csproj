@@ -6,4 +6,9 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\ITIGraduationProject.DAL\ITIGraduationProject.Domain.csproj" />
+    <ProjectReference Include="..\ITIGraduationProject.Infrastructure\ITIGraduationProject.Infrastructure.csproj" />
+  </ItemGroup>
+
 </Project>

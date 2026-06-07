@@ -6,4 +6,23 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+	  <PackageReference Include="MediatR" Version="12.5.0" />
+	  <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.16" />
+  </ItemGroup>
+
+  <ItemGroup>
+	  
+    <ProjectReference Include="..\ITIGraduationProject.DAL\ITIGraduationProject.Domain.csproj" />
+    <ProjectReference Include="..\ITIGraduationProject.Infrastructure\ITIGraduationProject.Infrastructure.csproj" />
+    <ProjectReference Include="..\ITIGraduationProject.Service\ITIGraduationProject.Service.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Features\User\Commands\Handlers\" />
+    <Folder Include="Features\User\Commands\Models\" />
+    <Folder Include="Features\User\Queries\Models\" />
+    <Folder Include="Features\User\Queries\Handlers\" />
+  </ItemGroup>
+
 </Project>
