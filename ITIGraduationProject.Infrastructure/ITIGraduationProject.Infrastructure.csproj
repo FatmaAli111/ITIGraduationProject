@@ -6,14 +6,12 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 	<ItemGroup>
-		<!-- ✅ This already includes everything ASP.NET Core related -->
 		<FrameworkReference Include="Microsoft.AspNetCore.App" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <PackageReference Include="EntityFramework" Version="6.5.2" />
-	  <PackageReference Include="Microsoft.AspNetCore.Hosting" Version="2.3.10" />
-	  <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.10" />
+	  
+	  <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.16" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.16" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.16" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.16">

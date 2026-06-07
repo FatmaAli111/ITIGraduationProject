@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using System.Reflection;
 
 namespace ITIGraduationProject.Application
 {
@@ -6,7 +7,8 @@ namespace ITIGraduationProject.Application
     {
         public static void AddApplicationModuleDependencies(this IServiceCollection services)
         {
-
+            
+            services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(Assembly.GetExecutingAssembly()));
         }
     }
 }
