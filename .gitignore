@@ -1,2 +1,9 @@
-.vs
-.json
+bin/
+obj/
+.vs/
+.vscode/
+
+*.user
+*.suo
+*.cache
+*.log

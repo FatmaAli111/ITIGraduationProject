@@ -1,3 +1,0 @@
-﻿<Project>
-  <Import Project="..\buildMultiTargeting\ITIGraduationProject.Api.props" />
-</Project>
