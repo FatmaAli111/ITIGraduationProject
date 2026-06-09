@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
@@ -13,7 +13,7 @@
 
   <ItemGroup>
 	  
-    <ProjectReference Include="..\ITIGraduationProject.DAL\ITIGraduationProject.Domain.csproj" />
+    <ProjectReference Include="..\ITIGraduationProject.Domain\ITIGraduationProject.Domain.csproj" />
     <ProjectReference Include="..\ITIGraduationProject.Infrastructure\ITIGraduationProject.Infrastructure.csproj" />
     <ProjectReference Include="..\ITIGraduationProject.Service\ITIGraduationProject.Service.csproj" />
   </ItemGroup>
@@ -26,3 +26,4 @@
   </ItemGroup>
 
 </Project>
+
