@@ -21,6 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\ITIGraduationProject.Application\ITIGraduationProject.Application.csproj" />
     <ProjectReference Include="..\ITIGraduationProject.Domain\ITIGraduationProject.Domain.csproj" />
   </ItemGroup>
 
