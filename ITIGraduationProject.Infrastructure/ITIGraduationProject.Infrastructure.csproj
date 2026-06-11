@@ -5,6 +5,12 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="DependencyInjection\**" />
+    <EmbeddedResource Remove="DependencyInjection\**" />
+    <None Remove="DependencyInjection\**" />
+  </ItemGroup>
 	<ItemGroup>
 		<FrameworkReference Include="Microsoft.AspNetCore.App" />
 	</ItemGroup>
@@ -22,10 +28,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ITIGraduationProject.Domain\ITIGraduationProject.Domain.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="DependencyInjection\" />
   </ItemGroup>
 
 </Project>
