@@ -5,9 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ITIGraduationProject.Domain.Entities
+namespace ITIGraduationProject.Infrastructure.Identity
 {
-    public class ApplicationUser:IdentityUser
+    public class ApplicationUser:IdentityUser<Guid>
     {
     }
 }

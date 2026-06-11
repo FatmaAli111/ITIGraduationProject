@@ -1,5 +1,5 @@
 ﻿using ITIGraduationProject.Domain.IRepository;
-using ITIGraduationProject.Infrastructure.Data;
+using ITIGraduationProject.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using System;

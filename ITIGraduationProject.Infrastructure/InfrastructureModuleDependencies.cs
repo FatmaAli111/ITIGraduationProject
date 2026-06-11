@@ -1,5 +1,5 @@
 ﻿using ITIGraduationProject.Domain.Entities;
-using ITIGraduationProject.Infrastructure.Data;
+using ITIGraduationProject.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -10,7 +10,7 @@ using System.Configuration;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
+using ITIGraduationProject.Infrastructure.Identity;
 namespace ITIGraduationProject.Infrastructure
 {
     public static class InfrastructureModuleDependencies

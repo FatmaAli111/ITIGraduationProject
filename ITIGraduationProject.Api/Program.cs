@@ -1,7 +1,7 @@
 using ITIGraduationProject.Application;
 using ITIGraduationProject.Application.Middlewares;
 using ITIGraduationProject.Infrastructure;
-using ITIGraduationProject.Infrastructure.Data;
+using ITIGraduationProject.Infrastructure.Persistence;
 using ITIGraduationProject.Service;
 using Microsoft.EntityFrameworkCore;
 
