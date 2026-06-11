@@ -12,17 +12,14 @@
   </ItemGroup>
 
   <ItemGroup>
-	  
-    <ProjectReference Include="..\ITIGraduationProject.Domain\ITIGraduationProject.Domain.csproj" />
-    <ProjectReference Include="..\ITIGraduationProject.Infrastructure\ITIGraduationProject.Infrastructure.csproj" />
-    <ProjectReference Include="..\ITIGraduationProject.Service\ITIGraduationProject.Service.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Folder Include="Features\User\Commands\Handlers\" />
     <Folder Include="Features\User\Commands\Models\" />
     <Folder Include="Features\User\Queries\Models\" />
     <Folder Include="Features\User\Queries\Handlers\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ITIGraduationProject.Domain\ITIGraduationProject.Domain.csproj" />
   </ItemGroup>
 
 </Project>

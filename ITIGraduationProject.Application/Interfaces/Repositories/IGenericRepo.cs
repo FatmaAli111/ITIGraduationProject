@@ -5,22 +5,26 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ITIGraduationProject.Domain.IRepository
+namespace ITIGraduationProject.Application.Repositories
 {
     public interface IGenericRepo<T> where T : class
     {
-        Task DeleteRangeAsync(ICollection<T> entities);
-        Task<T> GetByIdAsync(int id);
-        Task SaveChangesAsync();
-        IDbContextTransaction BeginTransaction();
-        void Commit();
-        void RollBack();
+        Task<T?> GetByIdAsync(Guid id);
+
         IQueryable<T> GetTableNoTracking();
+
         IQueryable<T> GetTableAsTracking();
+
         Task<T> AddAsync(T entity);
+
         Task AddRangeAsync(ICollection<T> entities);
-        Task UpdateAsync(T entity);
-        Task UpdateRangeAsync(ICollection<T> entities);
-        Task DeleteAsync(T entity);
+
+        void Update(T entity);
+
+        void UpdateRange(ICollection<T> entities);
+
+        void Delete(T entity);
+
+        void DeleteRange(ICollection<T> entities);
     }
 }
