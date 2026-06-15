@@ -22,7 +22,7 @@ public class DesignConfiguration : IEntityTypeConfiguration<Design>
         builder.Property(d => d.SelectedFabric).HasColumnType("int");
         builder.Property(d => d.SelectedSize).HasColumnType("int");
         builder.Property(d => d.Status).HasColumnType("int");
-        builder.Property(d => d.SelectedColor).HasColumnType("int");
+        builder.Property(d => d.SelectedColor).HasMaxLength(50);
 
 
 
