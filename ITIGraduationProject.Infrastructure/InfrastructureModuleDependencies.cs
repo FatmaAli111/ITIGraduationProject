@@ -22,7 +22,7 @@ namespace ITIGraduationProject.Infrastructure
 
         public static void AddInfrastructureModuleDependencies(this IServiceCollection services)
         {
-            services.AddIdentity<ApplicationUser, IdentityRole<string>>()
+            services.AddIdentity<ApplicationUser, IdentityRole<Guid>>()
                 .AddEntityFrameworkStores<AppDbContext>()
             .AddDefaultTokenProviders();
 
@@ -40,7 +40,6 @@ namespace ITIGraduationProject.Infrastructure
             services.AddScoped<IRewardRepository, RewardRepository>();
             services.AddScoped<IGraphicAssetRepository, GraphicAssetRepository>();
             services.AddScoped<INotificationRepository, NotificationRepository>();
-
             services.AddScoped<IUnitOfWork, UnitOfWork>();
         }
     }
