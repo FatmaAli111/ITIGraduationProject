@@ -1,26 +1,39 @@
-﻿using MediatR;
-using ITIGraduationProject.Application.Bases;
-using Microsoft.EntityFrameworkCore;
-using ITIGraduationProject.Infrastructure.Data;
+﻿using ITIGraduationProject.Application.Bases;
+using ITIGraduationProject.Application.Interfaces.Persistence;
 using Mapster;
+using MediatR;
+using Microsoft.EntityFrameworkCore;
+
 
 
 namespace ITIGraduationProject.Application.Features.Profiles.Queries.GetProfile
 {
     public class GetProfileHandler : IRequestHandler<GetProfileQuery, Response<ProfileDTO>>
     {
-        private readonly AppDbContext _context;
+        #region Dependency Injection
+        private readonly IUnitOfWork _unitOfWork;
 
-        #region DependencyInjection
-        public GetProfileHandler(AppDbContext context)
+        public GetProfileHandler(IUnitOfWork unitOfWork)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
         }
         #endregion
 
-        #region HandleMethod
-        public async Task<Response<ProfileDTO>> Handle(GetProfileQuery request, CancellationToken cancellationToken){ 
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == request.UserId, cancellationToken);
+        #region Handle Method
+        public async Task<Response<ProfileDTO>> Handle(GetProfileQuery request, CancellationToken cancellationToken){
+
+            if (!Guid.TryParse(request.UserId, out Guid userGuid))
+            {
+                return new Response<ProfileDTO>
+                {
+                    StatusCode = System.Net.HttpStatusCode.BadRequest,
+                    Succeeded = false,
+                    Message = "Invalid User ID format.",
+                    Data = null
+                };
+            }
+
+            var user = await _unitOfWork.Users.GetWithProfileCartAndPreferencesAsync(userGuid);
 
             if (user == null)
             {
@@ -37,12 +50,26 @@ namespace ITIGraduationProject.Application.Features.Profiles.Queries.GetProfile
             var profileDTO = user.Adapt<ProfileDTO>();
             #endregion
 
-            #region Controller
-            profileDTO.TotalOrdersCount = 5;
-            profileDTO.ItemsPurchasedCount = 6;
-            profileDTO.TotalSpent = 1500m;
-            profileDTO.TemplatesCreatedCount = 7;
-            profileDTO.AvgTemplateRating = 4.6;
+            #region Calculated data using IUnitOfWork
+            profileDTO.TotalOrdersCount = await _unitOfWork.Orders.GetTableNoTracking().CountAsync(
+                order => order.User.Id == userGuid, cancellationToken);
+
+            profileDTO.ItemsPurchasedCount = await _unitOfWork.Orders.GetTableNoTracking()
+                .Where(order => order.User.Id == userGuid)
+                .SelectMany(o => o.OrderItems)
+                .SumAsync(item => item.Quantity, cancellationToken);
+
+            profileDTO.TotalSpent = await _unitOfWork.Orders.GetTableNoTracking()
+                .Where(order => order.User.Id == userGuid)
+                .SumAsync(order => order.TotalAmount, cancellationToken);
+
+            profileDTO.TemplatesCreatedCount = await _unitOfWork.Templates.GetTableNoTracking()
+                .CountAsync(template => template.CreatorUserId == userGuid, cancellationToken);
+
+            profileDTO.AvgTemplateRating = await _unitOfWork.Templates.GetTableNoTracking()
+                .Where(templateRate => templateRate.CreatorUserId == userGuid)
+                .AverageAsync(templateRate => (double?)templateRate.LikesCount, cancellationToken) ?? 0.0;
+
             profileDTO.FollowersCount = 500;
             profileDTO.FollowingCount = 488;
             #endregion

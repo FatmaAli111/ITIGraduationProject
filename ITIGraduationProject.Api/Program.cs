@@ -18,6 +18,10 @@ namespace ITIGraduationProject.Api
             builder.Services.AddControllers();
             //add dbcontext
 
+            // adding swagger services to run Http
+            builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddSwaggerGen();
+
             builder.Services.AddDbContext<AppDbContext>(options =>
             options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnectionString"))
             );
@@ -27,6 +31,12 @@ namespace ITIGraduationProject.Api
             builder.Services.AddApplicationModuleDependencies();
           
             var app = builder.Build();
+
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Wearly API V1");
+            });
 
             // Configure the HTTP request pipeline.
             app.UseMiddleware<ErrorHandlerMiddleware>();

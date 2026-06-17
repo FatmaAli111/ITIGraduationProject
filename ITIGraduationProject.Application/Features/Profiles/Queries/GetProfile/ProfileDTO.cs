@@ -11,6 +11,9 @@ namespace ITIGraduationProject.Application.Features.Profiles.Queries.GetProfile
     #region StaticData
         public string UserName { get; set; }
         public string Name { get; set; }
+        public string Email { get; set; } 
+        public string Bio { get; set; } 
+        public string ProfilePictureUrl { get; set; }
         public string Location { get; set; }
         public DateTime DateJoined { get; set; }
         public bool IsTopProfile { get; set; }
