@@ -1,0 +1,121 @@
+﻿using System;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using ITIGraduationProject.Domain.Constants;
+using ITIGraduationProject.Domain.Entities.Identity;
+using ITIGraduationProject.Domain.Entities.ECommerce;
+using System.Data;
+using ITIGraduationProject.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
+
+namespace ITIGraduationProject.Infrastructure.Identity
+{
+
+    public static class IdentitySeeder
+    {
+        public static async Task SeedAsync(IServiceProvider serviceProvider)
+        {
+            using var scope = serviceProvider.CreateScope();
+
+            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+            var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>()
+                .CreateLogger("IdentitySeeder");
+
+            await SeedRolesAsync(roleManager, logger);
+            await SeedAdminAsync(userManager, context, configuration, logger);
+        }
+
+        private static async Task SeedRolesAsync(RoleManager<IdentityRole<Guid>> roleManager, ILogger logger)
+        {
+            string[] roles = { Roles.Admin, Roles.User, Roles.Printer };
+
+            foreach (var role in roles)
+            {
+                if (!await roleManager.RoleExistsAsync(role))
+                {
+                    await roleManager.CreateAsync(new IdentityRole<Guid>(role));
+                    logger.LogInformation("Role '{Role}' created.", role);
+                }
+            }
+        }
+
+        private static async Task SeedAdminAsync(
+            UserManager<ApplicationUser> userManager,
+            AppDbContext context,
+            IConfiguration configuration,
+            ILogger logger)
+        {
+            var email = configuration["AdminSeed:Email"];
+            var password = configuration["AdminSeed:Password"];
+            var name = configuration["AdminSeed:Name"] ?? "System Admin";
+
+            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+            {
+                logger.LogWarning("AdminSeed configuration is missing. Skipping admin seeding.");
+                return;
+            }
+
+            var applicationUser = await userManager.FindByEmailAsync(email);
+
+            if (applicationUser is null)
+            {
+                applicationUser = new ApplicationUser
+                {
+                    Id = Guid.NewGuid(),
+                    Email = email,
+                    UserName = email,
+                    EmailConfirmed = true
+                };
+
+                var result = await userManager.CreateAsync(applicationUser, password);
+
+                if (!result.Succeeded)
+                {
+                    logger.LogError("Failed to create admin user: {Errors}",
+                        string.Join(", ", result.Errors.Select(e => e.Description)));
+                    return;
+                }
+
+                logger.LogInformation("Admin ApplicationUser '{Email}' created.", email);
+            }
+            else if (!applicationUser.EmailConfirmed)
+            {
+                applicationUser.EmailConfirmed = true;
+                await userManager.UpdateAsync(applicationUser);
+            }
+
+            if (!await userManager.IsInRoleAsync(applicationUser, Roles.Admin))
+            {
+                await userManager.AddToRoleAsync(applicationUser, Roles.Admin);
+                logger.LogInformation("Admin role assigned to '{Email}'.", email);
+            }
+
+            var domainUserExists = await context.AppUsers
+                .AnyAsync(u => u.Id == applicationUser.Id);
+
+            if (!domainUserExists)
+            {
+                var domainUser = new User
+                {
+                    Id = applicationUser.Id,
+                    Name = name,
+                    IsActive = true,
+                    CurrentPointsBalance = 0,
+                    UserPreferences = new UserPreferences(),
+                    Cart = new Cart()
+                };
+
+                context.AppUsers.Add(domainUser);
+                await context.SaveChangesAsync();
+
+                logger.LogInformation("Domain User created for admin '{Email}'.", email);
+            }
+        }
+    }
+}

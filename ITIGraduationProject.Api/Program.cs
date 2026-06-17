@@ -1,6 +1,7 @@
 using ITIGraduationProject.Application;
 using ITIGraduationProject.Application.Middlewares;
 using ITIGraduationProject.Infrastructure;
+using ITIGraduationProject.Infrastructure.Identity;
 using ITIGraduationProject.Infrastructure.Persistence;
 using ITIGraduationProject.Service;
 using Microsoft.EntityFrameworkCore;
@@ -16,6 +17,8 @@ namespace ITIGraduationProject.Api
             // Add services to the container.
 
             builder.Services.AddControllers();
+            builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddSwaggerGen();
             //add dbcontext
 
             // adding swagger services to run Http
@@ -26,11 +29,17 @@ namespace ITIGraduationProject.Api
             options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnectionString"))
             );
             //Add Module Dependencies
-            builder.Services.AddServiceModuleDependencies();
+            builder.Services.AddServiceModuleDependencies(builder.Configuration);
             builder.Services.AddInfrastructureModuleDependencies();
             builder.Services.AddApplicationModuleDependencies();
-          
+            
             var app = builder.Build();
+            if (app.Environment.IsDevelopment())
+            {
+                app.UseSwagger();
+                app.UseSwaggerUI();
+            }
+            IdentitySeeder.SeedAsync(app.Services);
 
             app.UseSwagger();
             app.UseSwaggerUI(c =>

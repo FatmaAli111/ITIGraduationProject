@@ -1052,7 +1052,7 @@ namespace ITIGraduationProject.Infrastructure.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("UserPreferences");
+                    b.ToTable("UserPreferences", (string)null);
                 });
 
             modelBuilder.Entity("ITIGraduationProject.Domain.Entities.Products.Category", b =>

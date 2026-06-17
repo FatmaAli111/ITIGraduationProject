@@ -46,6 +46,7 @@ namespace ITIGraduationProject.Infrastructure.Persistence
         public DbSet<Category> Categories { get; set; }
         public DbSet<ProductImage> ProductImages { get; set; }
         public DbSet<Template> Templates { get; set; }
+        public DbSet<User> AppUsers { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

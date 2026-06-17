@@ -2,9 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using MediatR;
 using System.Threading.Tasks;
-using ITIGraduationProject.Application.Features.Profiles.Queries.GetProfile;
-using ITIGraduationProject.Application.Features.Profiles.Commands.UpdateProfile;
-using ITIGraduationProject.Application.Bases;
+
 using System.Net;
 
 namespace ITIGraduationProject.Api.Controllers
