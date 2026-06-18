@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using ITIGraduationProject.Application.Interfaces.Persistence;
+using ITIGraduationProject.Application.Interfaces.Repositories;
 using ITIGraduationProject.Application.Repositories;
 
 namespace ITIGraduationProject.Infrastructure.Persistence
@@ -20,6 +21,7 @@ namespace ITIGraduationProject.Infrastructure.Persistence
         public IRewardRepository Rewards { get; }
         public IGraphicAssetRepository GraphicAssets { get; }
         public INotificationRepository Notifications { get; }
+        public IRefreshTokenRepository RefreshTokens { get; }
 
         public UnitOfWork(
             AppDbContext context,
@@ -34,7 +36,8 @@ namespace ITIGraduationProject.Infrastructure.Persistence
             IShipmentRepository shipments,
             IRewardRepository rewards,
             IGraphicAssetRepository graphicAssets,
-            INotificationRepository notifications)
+            INotificationRepository notifications,
+            IRefreshTokenRepository refreshTokens)
         {
             _context = context;
 
@@ -50,6 +53,7 @@ namespace ITIGraduationProject.Infrastructure.Persistence
             Rewards = rewards;
             GraphicAssets = graphicAssets;
             Notifications = notifications;
+            RefreshTokens = refreshTokens;
         }
 
         public async Task<int> SaveChangesAsync()

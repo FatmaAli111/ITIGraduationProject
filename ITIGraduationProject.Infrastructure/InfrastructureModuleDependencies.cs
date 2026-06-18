@@ -1,5 +1,6 @@
 ﻿using ITIGraduationProject.Application.Interfaces;
 using ITIGraduationProject.Application.Interfaces.Persistence;
+using ITIGraduationProject.Application.Interfaces.Repositories;
 using ITIGraduationProject.Application.Repositories;
 using ITIGraduationProject.Domain.Entities;
 using ITIGraduationProject.Infrastructure.Identity;
@@ -50,6 +51,7 @@ namespace ITIGraduationProject.Infrastructure
             services.AddScoped<IRewardRepository, RewardRepository>();
             services.AddScoped<IGraphicAssetRepository, GraphicAssetRepository>();
             services.AddScoped<INotificationRepository, NotificationRepository>();
+            services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
             services.AddScoped<IUnitOfWork, UnitOfWork>();
         }
     }

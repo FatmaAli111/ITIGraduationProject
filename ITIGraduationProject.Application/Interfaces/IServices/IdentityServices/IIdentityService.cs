@@ -15,6 +15,9 @@ namespace ITIGraduationProject.Application.Interfaces.IServices.IdentityServices
             Task<Response<string>> RegisterAsync(RegisterRequestDTO request);
             Task<Response<string>> ConfirmEmailAsync(string userId, string token);
             Task<Response<LoginResponseDTO>> LoginAsync(LoginRequestDTO request);
-        }
+            Task<Response<LoginResponseDTO>> RefreshTokenAsync(string refreshToken);
+            Task<Response<string>> LogoutAsync(string refreshToken);
+            Task<Response<string>> LogoutAllDevicesAsync();
+    }
     
 }

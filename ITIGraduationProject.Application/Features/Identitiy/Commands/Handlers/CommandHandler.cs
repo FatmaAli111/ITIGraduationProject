@@ -9,7 +9,11 @@ namespace ITIGraduationProject.Application.Features.Identitiy.Commands.Handlers
 {
     public class CommandHandler :ResponseHandler,
         IRequestHandler<RegisterCommand, Response<string>>,
-                IRequestHandler<ConfirmEmailCommand, Response<string>>, IRequestHandler<LoginCommand, Response<LoginResponseDTO>>
+                IRequestHandler<ConfirmEmailCommand, Response<string>>,
+        IRequestHandler<LoginCommand, Response<LoginResponseDTO>>
+        ,IRequestHandler<RefreshTokenCommand,Response<LoginResponseDTO>>
+        , IRequestHandler<LogoutCommand, Response<string>>
+        , IRequestHandler<LogoutAllDevicesCommand, Response<string>>
 
     {
         private readonly IIdentityService _identityService;
@@ -34,6 +38,23 @@ namespace ITIGraduationProject.Application.Features.Identitiy.Commands.Handlers
         {
             var dto = _mapper.Map<LoginRequestDTO>(request);
             return await _identityService.LoginAsync(dto);
+        }
+
+        public async Task<Response<LoginResponseDTO>> Handle(RefreshTokenCommand request, CancellationToken cancellationToken)
+        {
+            return await _identityService.RefreshTokenAsync(request.RefreshToken);
+        }
+        public async Task<Response<string>> Handle(
+    LogoutCommand request,
+    CancellationToken cancellationToken)
+        {
+            return await _identityService.LogoutAsync(request.RefreshToken);
+        }
+        public async Task<Response<string>> Handle(
+    LogoutAllDevicesCommand request,
+    CancellationToken cancellationToken)
+        {
+            return await _identityService.LogoutAllDevicesAsync();
         }
     }
 }

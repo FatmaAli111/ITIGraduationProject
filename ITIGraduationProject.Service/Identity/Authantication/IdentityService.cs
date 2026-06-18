@@ -7,12 +7,14 @@ using ITIGraduationProject.Domain.Entities.ECommerce;
 using ITIGraduationProject.Domain.Entities.Identity;
 using ITIGraduationProject.Infrastructure.Identity;
 using ITIGraduationProject.Service.Identity.JWT;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -25,17 +27,20 @@ namespace ITIGraduationProject.Service.Identity.Authantication
         private readonly IEmailService _emailService;
         private readonly IConfiguration _configuration;
         private readonly IJwtService _jwtService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public IdentityService(
                 UserManager<ApplicationUser> userManager,
                 IUnitOfWork unitOfWork, IEmailService emailService,
-                IConfiguration configuration, IJwtService JwtService)
+                IConfiguration configuration, IJwtService JwtService,
+                  IHttpContextAccessor httpContextAccessor)
         {
             _userManager = userManager;
             _unitOfWork = unitOfWork;
             _emailService = emailService;
             _configuration = configuration;
             _jwtService = JwtService;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<Response<string>> RegisterAsync(RegisterRequestDTO request)
@@ -144,16 +149,127 @@ namespace ITIGraduationProject.Service.Identity.Authantication
                 applicationUser.Email,
                 roles.ToList());
 
+            var refreshTokenValue = _jwtService.GenerateRefreshToken();
+
+            var refreshToken = new RefreshToken
+            {
+                UserId = applicationUser.Id,
+                Token = refreshTokenValue,
+                ExpiresAt = DateTime.UtcNow.AddDays(7),
+                IsRevoked = false
+            };
+
+            await _unitOfWork.RefreshTokens.AddAsync(refreshToken);
+            await _unitOfWork.SaveChangesAsync();
+
             var response = new LoginResponseDTO
             {
                 AccessToken = accessToken,
                 ExpiresAt = expiresAt,
+                RefreshToken = refreshTokenValue,  
                 Email = applicationUser.Email,
                 Name = domainUser.Name,
                 Roles = roles.ToList()
             };
 
             return Success(response, "Login successful.");
+        }
+
+        public async Task<Response<LoginResponseDTO>> RefreshTokenAsync(string refreshToken)
+        {
+            var storedToken = await _unitOfWork.RefreshTokens
+                .GetByTokenAsync(refreshToken);
+
+            if (storedToken == null)
+                return Unauthorized<LoginResponseDTO>();
+
+            if (storedToken.IsRevoked)
+                return Unauthorized<LoginResponseDTO>();
+
+            if (storedToken.ExpiresAt <= DateTime.UtcNow)
+                return Unauthorized<LoginResponseDTO>();
+
+            var applicationUser = await _userManager.FindByIdAsync(storedToken.UserId.ToString());
+
+            if (applicationUser == null)
+                return Unauthorized<LoginResponseDTO>();
+
+            var roles = await _userManager.GetRolesAsync(applicationUser);
+
+            var (accessToken, expiresAt) = _jwtService.GenerateToken(
+                applicationUser.Id.ToString(),
+                applicationUser.Email!,
+                roles.ToList());
+
+            // Rotation
+            storedToken.IsRevoked = true;
+
+            var newRefreshTokenValue = _jwtService.GenerateRefreshToken();
+
+            var newRefreshToken = new RefreshToken
+            {
+                UserId = applicationUser.Id,
+                Token = newRefreshTokenValue,
+                ExpiresAt = DateTime.UtcNow.AddDays(7),
+                IsRevoked = false
+            };
+
+            _unitOfWork.RefreshTokens.Update(storedToken);
+            await _unitOfWork.RefreshTokens.AddAsync(newRefreshToken);
+
+            await _unitOfWork.SaveChangesAsync();
+
+            var domainUser = await _unitOfWork.Users.GetByIdAsync(applicationUser.Id);
+
+            return Success(new LoginResponseDTO
+            {
+                AccessToken = accessToken,
+                ExpiresAt = expiresAt,
+                RefreshToken = newRefreshTokenValue,
+                Email = applicationUser.Email,
+                Name = domainUser?.Name,
+                Roles = roles.ToList()
+            });
+        }
+        public async Task<Response<string>> LogoutAsync(string refreshToken)
+        {
+            var storedToken = await _unitOfWork.RefreshTokens
+                .GetByTokenAsync(refreshToken);
+
+            if (storedToken == null)
+                return Unauthorized<string>();
+
+            storedToken.IsRevoked = true;
+
+            _unitOfWork.RefreshTokens.Update(storedToken);
+
+            await _unitOfWork.SaveChangesAsync();
+
+            return Success("Logged out successfully");
+        }
+        public async Task<Response<string>> LogoutAllDevicesAsync()
+        {
+            var userId = _httpContextAccessor.HttpContext?
+                .User
+                .FindFirst(ClaimTypes.NameIdentifier)?
+                .Value;
+
+            if (userId == null)
+                return Unauthorized<string>();
+
+
+            var tokens = await _unitOfWork.RefreshTokens
+                .GetUserTokensAsync(Guid.Parse(userId));
+
+
+            foreach (var token in tokens)
+            {
+                token.IsRevoked = true;
+            }
+            await _unitOfWork.SaveChangesAsync();
+
+
+            return Success("Logged out from all devices successfully");
         }
     }
 }
