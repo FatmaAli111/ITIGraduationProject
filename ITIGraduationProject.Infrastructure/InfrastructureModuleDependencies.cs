@@ -6,10 +6,12 @@ using ITIGraduationProject.Domain.Entities;
 using ITIGraduationProject.Infrastructure.Identity;
 using ITIGraduationProject.Infrastructure.Persistence;
 using ITIGraduationProject.Infrastructure.Persistence.Repositories;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -24,10 +26,54 @@ namespace ITIGraduationProject.Infrastructure
 
         public static void AddInfrastructureModuleDependencies(this IServiceCollection services, IConfiguration configuration)
         {
+            services.AddDbContext<AppDbContext>(options =>
+           options.UseSqlServer(configuration.GetConnectionString("DefaultConnectionString"))
+           );
+            
             services.AddIdentity<ApplicationUser, IdentityRole<Guid>>()
                 .AddEntityFrameworkStores<AppDbContext>()
             .AddDefaultTokenProviders();
+            // Authentication (JWT + External Login Google & Facebook)
 
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
+            })
+       .AddJwtBearer(options =>
+       {
+           options.TokenValidationParameters = new TokenValidationParameters
+           {
+               ValidateIssuer = true,
+               ValidateAudience = true,
+               ValidateLifetime = true,
+               ValidateIssuerSigningKey = true,
+
+               ValidIssuer = configuration["JwtSettings:Issuer"],
+               ValidAudience = configuration["JwtSettings:Audience"],
+
+               IssuerSigningKey = new SymmetricSecurityKey(
+                   Encoding.UTF8.GetBytes(
+                       configuration["JwtSettings:SecretKey"]))
+           };
+       })
+       .AddGoogle(options =>
+       {
+           options.ClientId =
+               configuration["Authentication:Google:ClientId"];
+
+           options.ClientSecret =
+               configuration["Authentication:Google:ClientSecret"];
+       });
+       //.AddFacebook(options =>
+       //{
+       //    options.AppId =
+       //        configuration["Authentication:Facebook:AppId"];
+
+       //    //options.AppSecret =
+       //    //    configuration["Authentication:Facebook:Facebook:AppSecret"];
+       //});
             services.AddHttpClient<IAILayerClient, AILayerClient>(client =>
             {
                 client.BaseAddress = new Uri(configuration["AILayer:BaseUrl"]!);

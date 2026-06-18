@@ -9,13 +9,14 @@ namespace ITIGraduationProject.Application.Features.Identitiy.Commands.Handlers
 {
     public class CommandHandler :ResponseHandler,
         IRequestHandler<RegisterCommand, Response<string>>,
-                IRequestHandler<ConfirmEmailCommand, Response<string>>,
-        IRequestHandler<LoginCommand, Response<LoginResponseDTO>>
+                IRequestHandler<ConfirmEmailCommand, Response<string>>
+        ,IRequestHandler<LoginCommand, Response<LoginResponseDTO>>
         ,IRequestHandler<RefreshTokenCommand,Response<LoginResponseDTO>>
         , IRequestHandler<LogoutCommand, Response<string>>
         , IRequestHandler<LogoutAllDevicesCommand, Response<string>>
         , IRequestHandler<ForgetPasswordCommand, Response<string>>
         , IRequestHandler<ResetPasswordCommand, Response<string>>
+        ,IRequestHandler<ExternalLoginCommand,Response<ExternalLoginResponseDTO>>
 
     {
         private readonly IIdentityService _identityService;
@@ -73,6 +74,12 @@ namespace ITIGraduationProject.Application.Features.Identitiy.Commands.Handlers
                 request.Email,
                 request.Token,
                 request.NewPassword);
+        }
+        public async Task<Response<ExternalLoginResponseDTO>> Handle(
+    ExternalLoginCommand request,
+    CancellationToken cancellationToken)
+        {
+            return await _identityService.ExternalLoginAsync();
         }
     }
 
