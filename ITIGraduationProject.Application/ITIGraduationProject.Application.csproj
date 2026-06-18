@@ -1,28 +1,28 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
+	<TargetFramework>net9.0</TargetFramework>
+	<ImplicitUsings>enable</ImplicitUsings>
+	<Nullable>enable</Nullable>
   </PropertyGroup>
 
+	<ItemGroup>
+		<PackageReference Include="FluentValidation" Version="9.5.4" />
+		<PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="9.5.4" />
+		<PackageReference Include="Mapster" Version="10.0.8" />
+		<PackageReference Include="Mapster.DependencyInjection" Version="1.0.1" />
+		<PackageReference Include="MediatR" Version="12.5.0" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.16" />
+	</ItemGroup>
+
   <ItemGroup>
-	  <PackageReference Include="MediatR" Version="12.5.0" />
-	  <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.16" />
+	<Folder Include="Features\Identitiy\Queries\Models\" />
+	<Folder Include="Features\Identitiy\Queries\Handlers\" />
   </ItemGroup>
 
   <ItemGroup>
-	  
-    <ProjectReference Include="..\ITIGraduationProject.DAL\ITIGraduationProject.Domain.csproj" />
-    <ProjectReference Include="..\ITIGraduationProject.Infrastructure\ITIGraduationProject.Infrastructure.csproj" />
-    <ProjectReference Include="..\ITIGraduationProject.Service\ITIGraduationProject.Service.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Features\User\Commands\Handlers\" />
-    <Folder Include="Features\User\Commands\Models\" />
-    <Folder Include="Features\User\Queries\Models\" />
-    <Folder Include="Features\User\Queries\Handlers\" />
+	<ProjectReference Include="..\ITIGraduationProject.Domain\ITIGraduationProject.Domain.csproj" />
   </ItemGroup>
 
 </Project>
+
