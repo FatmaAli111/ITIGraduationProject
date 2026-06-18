@@ -29,5 +29,11 @@ namespace ITIGraduationProject.Api.IdentityControllers
             var result = await _mediatr.Send(command);
             return Ok(result);
         }
+        [HttpPost("login")]
+        public async Task<IActionResult> Login(LoginRequestDTO command)
+        {
+            var result = await _mediatr.Send(command);
+            return StatusCode((int)result.StatusCode, result);
+        }
     }
 }

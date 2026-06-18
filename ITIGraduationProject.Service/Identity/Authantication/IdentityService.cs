@@ -1,10 +1,12 @@
-﻿using ITIGraduationProject.Application.DTOS;
+﻿using ITIGraduationProject.Application.Bases;
+using ITIGraduationProject.Application.DTOS;
 using ITIGraduationProject.Application.Interfaces.IServices.IdentityServices;
 using ITIGraduationProject.Application.Interfaces.Persistence;
 using ITIGraduationProject.Domain.Constants;
 using ITIGraduationProject.Domain.Entities.ECommerce;
 using ITIGraduationProject.Domain.Entities.Identity;
 using ITIGraduationProject.Infrastructure.Identity;
+using ITIGraduationProject.Service.Identity.JWT;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using System;
@@ -16,21 +18,24 @@ using System.Threading.Tasks;
 
 namespace ITIGraduationProject.Service.Identity.Authantication
 {
-        public class IdentityService : IIdentityService
-        {
-            private readonly UserManager<ApplicationUser> _userManager;
-            private readonly IUnitOfWork _unitOfWork;
-            private readonly IEmailService _emailService;
-            private readonly IConfiguration _configuration;
+    public class IdentityService : IIdentityService
+    {
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IUnitOfWork _unitOfWork;
+        private readonly IEmailService _emailService;
+        private readonly IConfiguration _configuration;
+        private readonly IJwtService _jwtService;
 
         public IdentityService(
                 UserManager<ApplicationUser> userManager,
-                IUnitOfWork unitOfWork, IEmailService emailService,IConfiguration configuration)
-            {
-                _userManager = userManager;
-                _unitOfWork = unitOfWork;
-           _emailService = emailService;
+                IUnitOfWork unitOfWork, IEmailService emailService,
+                IConfiguration configuration, IJwtService JwtService)
+        {
+            _userManager = userManager;
+            _unitOfWork = unitOfWork;
+            _emailService = emailService;
             _configuration = configuration;
+            _jwtService = JwtService;
         }
 
         public async Task<string> RegisterAsync(RegisterRequestDTO request)
@@ -52,7 +57,7 @@ namespace ITIGraduationProject.Service.Identity.Authantication
             };
 
             await _unitOfWork.Users.AddAsync(domainUser);
-            await _unitOfWork.SaveChangesAsync();  
+            await _unitOfWork.SaveChangesAsync();
 
             var applicationUser = new ApplicationUser
             {
@@ -96,7 +101,7 @@ namespace ITIGraduationProject.Service.Identity.Authantication
             if (applicationUser.EmailConfirmed)
                 return new IdentityResultDto { Succeeded = true, Message = "Email already confirmed." };
 
-            var decodedToken = WebUtility.UrlDecode(token); 
+            var decodedToken = WebUtility.UrlDecode(token);
 
             var result = await _userManager.ConfirmEmailAsync(applicationUser, decodedToken);
             if (!result.Succeeded)
@@ -117,6 +122,56 @@ namespace ITIGraduationProject.Service.Identity.Authantication
 
             return new IdentityResultDto { Succeeded = true, Message = "Email confirmed successfully." };
         }
-    }
-    }
 
+        public async Task<Response<LoginResponseDTO>> LoginAsync(LoginRequestDTO request)
+        {
+            var applicationUser = await _userManager.FindByEmailAsync(request.Email);
+            if (applicationUser == null)
+                return new Response<LoginResponseDTO>("Invalid email or password.")
+                {
+                    StatusCode = HttpStatusCode.Unauthorized
+                };
+
+            if (!applicationUser.EmailConfirmed)
+                return new Response<LoginResponseDTO>("Please confirm your email first.")
+                {
+                    StatusCode = HttpStatusCode.Unauthorized
+                };
+
+            var isPasswordValid = await _userManager.CheckPasswordAsync(applicationUser, request.Password);
+            if (!isPasswordValid)
+                return new Response<LoginResponseDTO>("Invalid email or password.")
+                {
+                    StatusCode = HttpStatusCode.Unauthorized
+                };
+
+            var domainUser = await _unitOfWork.Users.GetByIdAsync(applicationUser.Id);
+            if (domainUser == null || !domainUser.IsActive)
+                return new Response<LoginResponseDTO>("Account is not active.")
+                {
+                    StatusCode = HttpStatusCode.Unauthorized
+                };
+
+            var roles = await _userManager.GetRolesAsync(applicationUser);
+
+            var (accessToken, expiresAt) = _jwtService.GenerateToken(
+                applicationUser.Id.ToString(),
+                applicationUser.Email,
+                roles.ToList());
+
+            var response = new LoginResponseDTO
+            {
+                AccessToken = accessToken,
+                ExpiresAt = expiresAt,
+                Email = applicationUser.Email,
+                Name = domainUser.Name,
+                Roles = roles.ToList()
+            };
+
+            return new Response<LoginResponseDTO>(response, "Login successful.")
+            {
+                StatusCode = HttpStatusCode.OK
+            };
+        }
+    }
+}

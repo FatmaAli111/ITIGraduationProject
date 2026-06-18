@@ -9,7 +9,7 @@ namespace ITIGraduationProject.Application.Features.Identitiy.Commands.Handlers
 {
     public class CommandHandler :ResponseHandler,
         IRequestHandler<RegisterCommand, Response<string>>,
-                IRequestHandler<ConfirmEmailCommand, Response<string>>
+                IRequestHandler<ConfirmEmailCommand, Response<string>>, IRequestHandler<LoginRequestDTO, Response<LoginResponseDTO>>
 
     {
         private readonly IIdentityService _identityService;
@@ -42,6 +42,11 @@ namespace ITIGraduationProject.Application.Features.Identitiy.Commands.Handlers
                 return BadRequest<string>(result.Message);
 
             return Success<string>(null, result.Message);
+        }
+        public async Task<Response<LoginResponseDTO>> Handle(LoginRequestDTO request, CancellationToken cancellationToken)
+        {
+            var dto = _mapper.Map<LoginRequestDTO>(request);
+            return await _identityService.LoginAsync(dto);
         }
     }
 }

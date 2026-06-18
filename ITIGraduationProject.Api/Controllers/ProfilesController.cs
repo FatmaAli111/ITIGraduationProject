@@ -4,6 +4,8 @@ using MediatR;
 using System.Threading.Tasks;
 
 using System.Net;
+using ITIGraduationProject.Application.Features.Profiles.Queries.GetProfile;
+using ITIGraduationProject.Application.Features.Profiles.Commands.UpdateProfile;
 
 namespace ITIGraduationProject.Api.Controllers
 {

@@ -13,6 +13,7 @@ namespace ITIGraduationProject.Application.Interfaces.IServices.IdentityServices
     {
         Task<string> RegisterAsync(RegisterRequestDTO request);
         Task<IdentityResultDto> ConfirmEmailAsync(string userId, string token);
+        Task<Response<LoginResponseDTO>> LoginAsync(LoginRequestDTO request);
 
     }
 }

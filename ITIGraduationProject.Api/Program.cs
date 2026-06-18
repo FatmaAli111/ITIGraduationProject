@@ -4,7 +4,11 @@ using ITIGraduationProject.Infrastructure;
 using ITIGraduationProject.Infrastructure.Identity;
 using ITIGraduationProject.Infrastructure.Persistence;
 using ITIGraduationProject.Service;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using System.Text;
 
 namespace ITIGraduationProject.Api
 {
@@ -32,7 +36,53 @@ namespace ITIGraduationProject.Api
             builder.Services.AddServiceModuleDependencies(builder.Configuration);
             builder.Services.AddInfrastructureModuleDependencies();
             builder.Services.AddApplicationModuleDependencies();
-            
+            builder.Services.AddSwaggerGen(options =>
+            {
+                options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    Name = "Authorization",
+                    Type = SecuritySchemeType.ApiKey,
+                    Scheme = "Bearer",
+                    BearerFormat = "JWT",
+                    In = ParameterLocation.Header,
+                    Description = "Enter 'Bearer' [space] and then your token"
+                });
+
+                options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] {}
+        }
+    });
+            });
+
+            builder.Services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
+        ValidAudience = builder.Configuration["JwtSettings:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:SecretKey"]))
+    };
+});
             var app = builder.Build();
             if (app.Environment.IsDevelopment())
             {
@@ -53,6 +103,7 @@ namespace ITIGraduationProject.Api
             app.UseHttpsRedirection();
             //app.UseCors(CORS);
 
+            app.UseAuthentication();  
             app.UseAuthorization();
 
 
