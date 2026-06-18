@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
@@ -30,9 +31,15 @@ namespace ITIGraduationProject.Infrastructure
            options.UseSqlServer(configuration.GetConnectionString("DefaultConnectionString"))
            );
             
-            services.AddIdentity<ApplicationUser, IdentityRole<Guid>>()
+            services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options=>
+          {
+              options.Lockout.AllowedForNewUsers = true;
+              options.Lockout.MaxFailedAccessAttempts = 5;
+              options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+          }  )
                 .AddEntityFrameworkStores<AppDbContext>()
             .AddDefaultTokenProviders();
+
             // Authentication (JWT + External Login Google & Facebook)
 
             services.AddAuthentication(options =>
