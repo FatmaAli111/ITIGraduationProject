@@ -137,9 +137,23 @@ namespace ITIGraduationProject.Service.Identity.Authantication
             if (!applicationUser.EmailConfirmed)
                 return BadRequest<LoginResponseDTO>("Please confirm your email first.");
 
+            if (await _userManager.IsLockedOutAsync(applicationUser))
+                return BadRequest<LoginResponseDTO>(
+                    $"Account locked. Try again after {applicationUser.LockoutEnd?.ToLocalTime():HH:mm}.");
+
             var isPasswordValid = await _userManager.CheckPasswordAsync(applicationUser, request.Password);
             if (!isPasswordValid)
+            {
+                await _userManager.AccessFailedAsync(applicationUser);
+                applicationUser = await _userManager.FindByIdAsync(applicationUser.Id.ToString());
+
+                if (await _userManager.IsLockedOutAsync(applicationUser))
+                    return BadRequest<LoginResponseDTO>("Account locked due to multiple failed attempts. Try again after 15 minutes.");
+
                 return Unauthorized<LoginResponseDTO>();
+            }
+
+            await _userManager.ResetAccessFailedCountAsync(applicationUser);
 
             var domainUser = await _unitOfWork.Users.GetByIdAsync(applicationUser.Id);
             if (domainUser == null || !domainUser.IsActive)
@@ -169,7 +183,7 @@ namespace ITIGraduationProject.Service.Identity.Authantication
             {
                 AccessToken = accessToken,
                 ExpiresAt = expiresAt,
-                RefreshToken = refreshTokenValue,  
+                RefreshToken = refreshTokenValue,
                 Email = applicationUser.Email,
                 Name = domainUser.Name,
                 Roles = roles.ToList()
@@ -177,7 +191,6 @@ namespace ITIGraduationProject.Service.Identity.Authantication
 
             return Success(response, "Login successful.");
         }
-
         public async Task<Response<LoginResponseDTO>> RefreshTokenAsync(string refreshToken)
         {
             var storedToken = await _unitOfWork.RefreshTokens
