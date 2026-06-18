@@ -14,12 +14,13 @@ namespace ITIGraduationProject.Api.Controllers
         {
             _mediator = mediator;
         }
-        [HttpGet]
+        [HttpGet("GetProducts")]
         public async Task<IActionResult> GetProducts(
             [FromQuery] GetProductsQuery query, CancellationToken ct)
         {
             return Ok(await _mediator.Send(query));
         }
+        [HttpGet("GetProductById")]
         public async Task<IActionResult> GetProductById(
             [FromQuery] GetProductByIdQuery query, CancellationToken ct)
         {
