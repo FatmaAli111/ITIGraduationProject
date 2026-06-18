@@ -9,5 +9,6 @@ namespace ITIGraduationProject.Application.Interfaces.IServices.IdentityServices
     public interface IJwtService
     {
         (string Token, DateTime ExpiresAt) GenerateToken(string userId, string email, List<string> roles);
+        string GenerateRefreshToken();  
     }
 }

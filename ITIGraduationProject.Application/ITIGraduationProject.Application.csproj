@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
 	<TargetFramework>net9.0</TargetFramework>
@@ -16,12 +16,11 @@
 	</ItemGroup>
 
   <ItemGroup>
-	<Folder Include="Features\Identitiy\Queries\Models\" />
-	<Folder Include="Features\Identitiy\Queries\Handlers\" />
+	<ProjectReference Include="..\ITIGraduationProject.Domain\ITIGraduationProject.Domain.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-	<ProjectReference Include="..\ITIGraduationProject.Domain\ITIGraduationProject.Domain.csproj" />
+    <Folder Include="Features\Identitiy\Queries\" />
   </ItemGroup>
 
 </Project>

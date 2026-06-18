@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using ITIGraduationProject.Application.Interfaces.Repositories;
 using ITIGraduationProject.Application.Repositories;
 
 namespace ITIGraduationProject.Application.Interfaces.Persistence
@@ -17,6 +18,7 @@ namespace ITIGraduationProject.Application.Interfaces.Persistence
         IRewardRepository Rewards { get; }
         IGraphicAssetRepository GraphicAssets { get; }
         INotificationRepository Notifications { get; }
+        IRefreshTokenRepository RefreshTokens { get; }
 
         Task<int> SaveChangesAsync();
     }
