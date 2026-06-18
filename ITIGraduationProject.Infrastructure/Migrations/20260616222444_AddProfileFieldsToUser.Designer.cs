@@ -4,6 +4,7 @@ using ITIGraduationProject.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ITIGraduationProject.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260616222444_AddProfileFieldsToUser")]
+    partial class AddProfileFieldsToUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -462,8 +465,9 @@ namespace ITIGraduationProject.Infrastructure.Migrations
                     b.Property<Guid>("ProductId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<int>("SelectedColor")
-                        .HasColumnType("int");
+                    b.Property<string>("SelectedColor")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<int?>("SelectedFabric")
                         .HasColumnType("int");
@@ -790,7 +794,7 @@ namespace ITIGraduationProject.Infrastructure.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
 
-                    b.Property<Guid>("PrinterProfileId")
+                    b.Property<Guid?>("PrinterProfileId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("Quantity")
@@ -1051,7 +1055,7 @@ namespace ITIGraduationProject.Infrastructure.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("UserPreferences", (string)null);
+                    b.ToTable("UserPreferences");
                 });
 
             modelBuilder.Entity("ITIGraduationProject.Domain.Entities.Products.Category", b =>
@@ -1693,8 +1697,7 @@ namespace ITIGraduationProject.Infrastructure.Migrations
                     b.HasOne("ITIGraduationProject.Domain.Entities.Identity.PrinterProfile", "PrinterProfile")
                         .WithMany("OrderItems")
                         .HasForeignKey("PrinterProfileId")
-                        .OnDelete(DeleteBehavior.SetNull)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Design");
 

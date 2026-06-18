@@ -16,7 +16,7 @@ public class OrderItem : BaseEntity
     public string PriceBreakdown { get; set; } = string.Empty;
     public string SnapshotImageURL { get; set; } = string.Empty;
     public OrderItemStatus Status { get; set; }
-    public Guid? PrinterProfileId { get; set; }
+    public Guid PrinterProfileId { get; set; }
     public PrinterProfile PrinterProfile { get; set; } = null!;
 
     public Order Order { get; set; } = null!;
