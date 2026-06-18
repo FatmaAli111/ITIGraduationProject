@@ -1,5 +1,10 @@
-﻿using ITIGraduationProject.Domain.Entities;
+﻿using ITIGraduationProject.Application.Interfaces;
+using ITIGraduationProject.Application.Interfaces.Persistence;
+using ITIGraduationProject.Application.Repositories;
+using ITIGraduationProject.Domain.Entities;
+using ITIGraduationProject.Infrastructure.Identity;
 using ITIGraduationProject.Infrastructure.Persistence;
+using ITIGraduationProject.Infrastructure.Persistence.Repositories;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -10,21 +15,26 @@ using System.Configuration;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using ITIGraduationProject.Infrastructure.Identity;
-using ITIGraduationProject.Application.Repositories;
-using ITIGraduationProject.Infrastructure.Persistence.Repositories;
-using ITIGraduationProject.Application.Interfaces.Persistence;
 
 namespace ITIGraduationProject.Infrastructure
 {
     public static class InfrastructureModuleDependencies
     {
 
-        public static void AddInfrastructureModuleDependencies(this IServiceCollection services)
+        public static void AddInfrastructureModuleDependencies(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddIdentity<ApplicationUser, IdentityRole<Guid>>()
                 .AddEntityFrameworkStores<AppDbContext>()
             .AddDefaultTokenProviders();
+
+            services.AddHttpClient<IAILayerClient, AILayerClient>(client =>
+            {
+                client.BaseAddress = new Uri(configuration["AILayer:BaseUrl"]!);
+                client.Timeout = TimeSpan.FromSeconds(120); // image gen takes time
+            });
+
+            services.AddHttpContextAccessor();
+            services.AddScoped<ICurrentUserService, CurrentUserService>();
 
             services.AddScoped(typeof(IGenericRepo<>), typeof(GenericRepo<>));
 

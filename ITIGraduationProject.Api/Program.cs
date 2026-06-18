@@ -23,7 +23,7 @@ namespace ITIGraduationProject.Api
             );
             //Add Module Dependencies
             builder.Services.AddServiceModuleDependencies();
-            builder.Services.AddInfrastructureModuleDependencies();
+            builder.Services.AddInfrastructureModuleDependencies(builder.Configuration);
             builder.Services.AddApplicationModuleDependencies();
           
             var app = builder.Build();
