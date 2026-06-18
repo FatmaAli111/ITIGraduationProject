@@ -18,7 +18,7 @@ using System.Threading.Tasks;
 
 namespace ITIGraduationProject.Service.Identity.Authantication
 {
-    public class IdentityService : IIdentityService
+    public class IdentityService : ResponseHandler, IIdentityService
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IUnitOfWork _unitOfWork;
@@ -38,11 +38,11 @@ namespace ITIGraduationProject.Service.Identity.Authantication
             _jwtService = JwtService;
         }
 
-        public async Task<string> RegisterAsync(RegisterRequestDTO request)
+        public async Task<Response<string>> RegisterAsync(RegisterRequestDTO request)
         {
             var existingUser = await _userManager.FindByEmailAsync(request.Email);
             if (existingUser != null)
-                return "Email already exists.";
+                return BadRequest<string>("Email already exists.");
 
             var newId = Guid.NewGuid();
 
@@ -72,7 +72,7 @@ namespace ITIGraduationProject.Service.Identity.Authantication
             {
                 _unitOfWork.Users.Delete(domainUser);
                 await _unitOfWork.SaveChangesAsync();
-                return string.Join(", ", result.Errors.Select(e => e.Description));
+                return BadRequest<string>(string.Join(", ", result.Errors.Select(e => e.Description)));
             }
 
             await _userManager.AddToRoleAsync(applicationUser, Roles.User);
@@ -87,30 +87,27 @@ namespace ITIGraduationProject.Service.Identity.Authantication
 
             await _emailService.SendEmailAsync(request.Email, "Confirm your email", body);
 
-            return "Registration successful. Please check your email to confirm your account.";
+            return Success<string>(applicationUser.Id.ToString(),
+                "Registration successful. Please check your email to confirm your account.");
         }
-        public async Task<IdentityResultDto> ConfirmEmailAsync(string userId, string token)
+
+        public async Task<Response<string>> ConfirmEmailAsync(string userId, string token)
         {
             if (!Guid.TryParse(userId, out var parsedUserId))
-                return new IdentityResultDto { Succeeded = false, Message = "Invalid user id." };
+                return BadRequest<string>("Invalid user id.");
 
             var applicationUser = await _userManager.FindByIdAsync(userId);
             if (applicationUser == null)
-                return new IdentityResultDto { Succeeded = false, Message = "User not found." };
+                return NotFound<string>("User not found.");
 
             if (applicationUser.EmailConfirmed)
-                return new IdentityResultDto { Succeeded = true, Message = "Email already confirmed." };
+                return Success<string>(null, "Email already confirmed.");
 
             var decodedToken = WebUtility.UrlDecode(token);
 
             var result = await _userManager.ConfirmEmailAsync(applicationUser, decodedToken);
             if (!result.Succeeded)
-                return new IdentityResultDto
-                {
-                    Succeeded = false,
-                    Message = "Email confirmation failed.",
-                    Errors = result.Errors.Select(e => e.Description).ToList()
-                };
+                return BadRequest<string>("Email confirmation failed.");
 
             var domainUser = await _unitOfWork.Users.GetByIdAsync(parsedUserId);
             if (domainUser != null)
@@ -120,37 +117,25 @@ namespace ITIGraduationProject.Service.Identity.Authantication
                 await _unitOfWork.SaveChangesAsync();
             }
 
-            return new IdentityResultDto { Succeeded = true, Message = "Email confirmed successfully." };
+            return Success<string>(null, "Email confirmed successfully.");
         }
 
         public async Task<Response<LoginResponseDTO>> LoginAsync(LoginRequestDTO request)
         {
             var applicationUser = await _userManager.FindByEmailAsync(request.Email);
             if (applicationUser == null)
-                return new Response<LoginResponseDTO>("Invalid email or password.")
-                {
-                    StatusCode = HttpStatusCode.Unauthorized
-                };
+                return Unauthorized<LoginResponseDTO>();
 
             if (!applicationUser.EmailConfirmed)
-                return new Response<LoginResponseDTO>("Please confirm your email first.")
-                {
-                    StatusCode = HttpStatusCode.Unauthorized
-                };
+                return BadRequest<LoginResponseDTO>("Please confirm your email first.");
 
             var isPasswordValid = await _userManager.CheckPasswordAsync(applicationUser, request.Password);
             if (!isPasswordValid)
-                return new Response<LoginResponseDTO>("Invalid email or password.")
-                {
-                    StatusCode = HttpStatusCode.Unauthorized
-                };
+                return Unauthorized<LoginResponseDTO>();
 
             var domainUser = await _unitOfWork.Users.GetByIdAsync(applicationUser.Id);
             if (domainUser == null || !domainUser.IsActive)
-                return new Response<LoginResponseDTO>("Account is not active.")
-                {
-                    StatusCode = HttpStatusCode.Unauthorized
-                };
+                return BadRequest<LoginResponseDTO>("Account is not active.");
 
             var roles = await _userManager.GetRolesAsync(applicationUser);
 
@@ -168,10 +153,7 @@ namespace ITIGraduationProject.Service.Identity.Authantication
                 Roles = roles.ToList()
             };
 
-            return new Response<LoginResponseDTO>(response, "Login successful.")
-            {
-                StatusCode = HttpStatusCode.OK
-            };
+            return Success(response, "Login successful.");
         }
     }
 }

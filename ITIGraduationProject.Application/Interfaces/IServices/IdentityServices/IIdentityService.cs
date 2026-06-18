@@ -9,11 +9,12 @@ using System.Threading.Tasks;
 
 namespace ITIGraduationProject.Application.Interfaces.IServices.IdentityServices
 {
-    public interface IIdentityService
-    {
-        Task<string> RegisterAsync(RegisterRequestDTO request);
-        Task<IdentityResultDto> ConfirmEmailAsync(string userId, string token);
-        Task<Response<LoginResponseDTO>> LoginAsync(LoginRequestDTO request);
-
-    }
+   
+        public interface IIdentityService
+        {
+            Task<Response<string>> RegisterAsync(RegisterRequestDTO request);
+            Task<Response<string>> ConfirmEmailAsync(string userId, string token);
+            Task<Response<LoginResponseDTO>> LoginAsync(LoginRequestDTO request);
+        }
+    
 }

@@ -33,7 +33,7 @@ namespace ITIGraduationProject.Api.IdentityControllers
         public async Task<IActionResult> Login(LoginRequestDTO command)
         {
             var result = await _mediatr.Send(command);
-            return StatusCode((int)result.StatusCode, result);
+            return Ok(result);
         }
     }
 }
