@@ -28,12 +28,14 @@ namespace ITIGraduationProject.Service.Identity.Authantication
         private readonly IConfiguration _configuration;
         private readonly IJwtService _jwtService;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly SignInManager<ApplicationUser> _signInManager;
 
         public IdentityService(
                 UserManager<ApplicationUser> userManager,
                 IUnitOfWork unitOfWork, IEmailService emailService,
                 IConfiguration configuration, IJwtService JwtService,
-                  IHttpContextAccessor httpContextAccessor)
+                  IHttpContextAccessor httpContextAccessor
+            , SignInManager<ApplicationUser> signInManager)
         {
             _userManager = userManager;
             _unitOfWork = unitOfWork;
@@ -41,6 +43,7 @@ namespace ITIGraduationProject.Service.Identity.Authantication
             _configuration = configuration;
             _jwtService = JwtService;
             _httpContextAccessor = httpContextAccessor;
+            _signInManager = signInManager;
         }
 
         public async Task<Response<string>> RegisterAsync(RegisterRequestDTO request)
@@ -324,6 +327,149 @@ namespace ITIGraduationProject.Service.Identity.Authantication
                 "Password reset successfully.");
         }
 
+        public async Task<Response<ExternalLoginResponseDTO>> ExternalLoginAsync()
+        {
+            var info = await _signInManager.GetExternalLoginInfoAsync();
 
+            if (info == null)
+                return BadRequest<ExternalLoginResponseDTO>(
+                    "External login failed.");
+
+
+            var email = info.Principal
+                .FindFirstValue(ClaimTypes.Email);
+
+
+            if (string.IsNullOrEmpty(email))
+                return BadRequest<ExternalLoginResponseDTO>(
+                    "Email not found from provider.");
+
+
+            var name = info.Principal
+                .FindFirstValue(ClaimTypes.Name);
+
+
+
+            var applicationUser =
+                await _userManager.FindByEmailAsync(email);
+
+
+
+            if (applicationUser == null)
+            {
+                var newId = Guid.NewGuid();
+
+
+                // Create Domain User
+                var domainUser = new User
+                {
+                    Id = newId,
+                    Name = name ?? email.Split('@')[0],
+                    IsActive = true,
+                    CurrentPointsBalance = 0,
+                    UserPreferences = new UserPreferences(),
+                    Cart = new Cart()
+                };
+
+
+                await _unitOfWork.Users.AddAsync(domainUser);
+
+
+
+                // Create Identity User
+                applicationUser = new ApplicationUser
+                {
+                    Id = newId,
+                    Email = email,
+                    UserName = email,
+                    EmailConfirmed = true
+                };
+
+
+                var result =
+                    await _userManager.CreateAsync(applicationUser);
+
+
+                if (!result.Succeeded)
+                {
+                    _unitOfWork.Users.Delete(domainUser);
+                    await _unitOfWork.SaveChangesAsync();
+
+                    return BadRequest<ExternalLoginResponseDTO>(
+                        string.Join(", ",
+                        result.Errors.Select(e => e.Description)));
+                }
+
+
+                await _userManager.AddToRoleAsync(
+                    applicationUser,
+                    Roles.User);
+            }
+
+
+
+            // Check if Google login already linked
+            var logins =
+                await _userManager.GetLoginsAsync(applicationUser);
+
+
+
+            if (!logins.Any(x =>
+                x.LoginProvider == info.LoginProvider))
+            {
+                await _userManager.AddLoginAsync(
+                    applicationUser,
+                    info);
+            }
+
+
+
+            // Generate JWT
+            var roles =
+                await _userManager.GetRolesAsync(applicationUser);
+
+
+            var (accessToken, expiresAt) =
+                _jwtService.GenerateToken(
+                    applicationUser.Id.ToString(),
+                    applicationUser.Email,
+                    roles.ToList());
+
+
+
+            // Generate Refresh Token
+            var refreshTokenValue =
+                _jwtService.GenerateRefreshToken();
+
+
+
+            var refreshToken = new RefreshToken
+            {
+                UserId = applicationUser.Id,
+                Token = refreshTokenValue,
+                ExpiresAt = DateTime.UtcNow.AddDays(7),
+                IsRevoked = false
+            };
+
+
+            await _unitOfWork.RefreshTokens.AddAsync(refreshToken);
+
+            await _unitOfWork.SaveChangesAsync();
+
+
+
+            var response = new ExternalLoginResponseDTO
+            {
+                Id = applicationUser.Id.ToString(),
+                Email = applicationUser.Email,
+                AccessToken = accessToken,
+                RefreshToken = refreshTokenValue
+            };
+
+
+            return Success(
+                response,
+                "External login successful.");
+        }
     }
 }
