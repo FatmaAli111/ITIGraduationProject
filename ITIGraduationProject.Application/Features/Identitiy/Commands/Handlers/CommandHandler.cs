@@ -14,6 +14,8 @@ namespace ITIGraduationProject.Application.Features.Identitiy.Commands.Handlers
         ,IRequestHandler<RefreshTokenCommand,Response<LoginResponseDTO>>
         , IRequestHandler<LogoutCommand, Response<string>>
         , IRequestHandler<LogoutAllDevicesCommand, Response<string>>
+        , IRequestHandler<ForgetPasswordCommand, Response<string>>
+        , IRequestHandler<ResetPasswordCommand, Response<string>>
 
     {
         private readonly IIdentityService _identityService;
@@ -56,5 +58,22 @@ namespace ITIGraduationProject.Application.Features.Identitiy.Commands.Handlers
         {
             return await _identityService.LogoutAllDevicesAsync();
         }
+        public async Task<Response<string>> Handle(
+    ForgetPasswordCommand request,
+    CancellationToken cancellationToken)
+        {
+            return await _identityService
+                .ForgetPasswordAsync(request.Email);
+        }
+        public async Task<Response<string>> Handle(
+    ResetPasswordCommand request,
+    CancellationToken cancellationToken)
+        {
+            return await _identityService.ResetPasswordAsync(
+                request.Email,
+                request.Token,
+                request.NewPassword);
+        }
     }
+
 }

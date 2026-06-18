@@ -18,6 +18,8 @@ namespace ITIGraduationProject.Application.Interfaces.IServices.IdentityServices
             Task<Response<LoginResponseDTO>> RefreshTokenAsync(string refreshToken);
             Task<Response<string>> LogoutAsync(string refreshToken);
             Task<Response<string>> LogoutAllDevicesAsync();
+            Task<Response<string>> ForgetPasswordAsync(string email);
+           Task<Response<string>> ResetPasswordAsync(string email, string token,string newPassword);
     }
     
 }

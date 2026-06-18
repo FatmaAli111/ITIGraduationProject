@@ -57,6 +57,21 @@ namespace ITIGraduationProject.Api.IdentityControllers
 
             return Ok(result);
         }
-      
+        [HttpPost("forget-password")]
+        public async Task<IActionResult> ForgetPassword(
+      ForgetPasswordCommand command)
+        {
+            var result = await _mediatr.Send(command);
+
+            return Ok(result);
+        }
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword(
+    [FromBody] ResetPasswordCommand command)
+        {
+            var result = await _mediatr.Send(command);
+
+            return Ok(result);
+        }
     }
 }
