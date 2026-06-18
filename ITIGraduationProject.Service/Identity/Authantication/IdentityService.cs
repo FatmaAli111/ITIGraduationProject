@@ -271,5 +271,59 @@ namespace ITIGraduationProject.Service.Identity.Authantication
 
             return Success("Logged out from all devices successfully");
         }
+        public async Task<Response<string>> ForgetPasswordAsync(string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+
+            if (user == null)
+                return BadRequest<string>("User not found");
+
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+            var encodedToken = WebUtility.UrlEncode(token);
+
+            var resetLink =
+                $"{_configuration.GetSection("AppSettings:ClientBaseUrl").Value}/reset-password?email={user.Email}&token={encodedToken}";
+
+            var body =
+                $"<h3>Password Reset</h3>" +
+                $"<p>Click <a href='{resetLink}'>here</a> to reset your password.</p>";
+
+            await _emailService.SendEmailAsync(
+                user.Email!,
+                "Reset Password",
+                body);
+
+            return Success<string>(
+                null,
+                "Password reset link sent successfully.");
+        }
+        public async Task<Response<string>> ResetPasswordAsync(
+        string email,
+        string token,
+        string newPassword)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+
+            if (user == null)
+                return NotFound<string>("User not found.");
+
+            var decodedToken = WebUtility.UrlDecode(token);
+
+            var result = await _userManager.ResetPasswordAsync(
+                user,
+                decodedToken,
+                newPassword);
+
+            if (!result.Succeeded)
+                return BadRequest<string>(
+                    string.Join(", ", result.Errors.Select(x => x.Description)));
+
+            return Success<string>(
+                null,
+                "Password reset successfully.");
+        }
+
+
     }
 }
