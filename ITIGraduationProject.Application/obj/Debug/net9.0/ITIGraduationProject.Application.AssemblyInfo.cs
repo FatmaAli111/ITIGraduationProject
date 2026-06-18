@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ITIGraduationProject.Application")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b6b64d9286e763aa1c7ffc6911176e96a212deb8")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+40f338c09e694130f64ea9978ba78ed221455e79")]
 [assembly: System.Reflection.AssemblyProductAttribute("ITIGraduationProject.Application")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ITIGraduationProject.Application")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

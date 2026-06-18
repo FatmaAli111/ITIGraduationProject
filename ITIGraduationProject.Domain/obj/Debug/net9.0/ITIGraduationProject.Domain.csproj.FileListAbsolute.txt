@@ -1,0 +1,13 @@
+F:\NewOneWithIti\ITIGraduationProject\ITIGraduationProject.Domain\bin\Debug\net9.0\ITIGraduationProject.Domain.deps.json
+F:\NewOneWithIti\ITIGraduationProject\ITIGraduationProject.Domain\bin\Debug\net9.0\ITIGraduationProject.Domain.dll
+F:\NewOneWithIti\ITIGraduationProject\ITIGraduationProject.Domain\bin\Debug\net9.0\ITIGraduationProject.Domain.pdb
+F:\NewOneWithIti\ITIGraduationProject\ITIGraduationProject.Domain\obj\Debug\net9.0\ITIGraduationProject.Domain.csproj.AssemblyReference.cache
+F:\NewOneWithIti\ITIGraduationProject\ITIGraduationProject.Domain\obj\Debug\net9.0\ITIGraduationProject.Domain.GeneratedMSBuildEditorConfig.editorconfig
+F:\NewOneWithIti\ITIGraduationProject\ITIGraduationProject.Domain\obj\Debug\net9.0\ITIGraduationProject.Domain.AssemblyInfoInputs.cache
+F:\NewOneWithIti\ITIGraduationProject\ITIGraduationProject.Domain\obj\Debug\net9.0\ITIGraduationProject.Domain.AssemblyInfo.cs
+F:\NewOneWithIti\ITIGraduationProject\ITIGraduationProject.Domain\obj\Debug\net9.0\ITIGraduationProject.Domain.csproj.CoreCompileInputs.cache
+F:\NewOneWithIti\ITIGraduationProject\ITIGraduationProject.Domain\obj\Debug\net9.0\ITIGraduationProject.Domain.sourcelink.json
+F:\NewOneWithIti\ITIGraduationProject\ITIGraduationProject.Domain\obj\Debug\net9.0\ITIGraduationProject.Domain.dll
+F:\NewOneWithIti\ITIGraduationProject\ITIGraduationProject.Domain\obj\Debug\net9.0\refint\ITIGraduationProject.Domain.dll
+F:\NewOneWithIti\ITIGraduationProject\ITIGraduationProject.Domain\obj\Debug\net9.0\ITIGraduationProject.Domain.pdb
+F:\NewOneWithIti\ITIGraduationProject\ITIGraduationProject.Domain\obj\Debug\net9.0\ref\ITIGraduationProject.Domain.dll
