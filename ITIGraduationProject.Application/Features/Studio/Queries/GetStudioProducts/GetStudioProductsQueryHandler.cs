@@ -23,18 +23,7 @@ namespace ITIGraduationProject.Application.Features.Studio.Queries.GetStudioProd
         {
             var products = await _unitOfWork.Products
                 .GetTableNoTracking()
-                .Select(p => new StudioProductListItemDto
-                {
-                    Id = p.Id,
-                    Name = p.Name,
-                    BasePrice = p.BasePrice,
-                    ThumbnailImageUrl = p.ProductImages
-                        .Where(img => !string.IsNullOrEmpty(img.PrintableZoneJson))
-                        .OrderByDescending(img => img.IsPrimary)
-                        .ThenBy(img => img.DisplayOrder)
-                        .Select(img => img.ImageUrl)
-                        .FirstOrDefault() ?? string.Empty
-                })
+                .ProjectToType<StudioProductListItemDto>()
                 .Where(p => p.ThumbnailImageUrl != string.Empty)
                 .ToListAsync(cancellationToken);
 
