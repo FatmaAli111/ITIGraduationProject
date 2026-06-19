@@ -9,7 +9,14 @@ namespace ITIGraduationProject.Application.Features.Identitiy.Commands.Handlers
 {
     public class CommandHandler :ResponseHandler,
         IRequestHandler<RegisterCommand, Response<string>>,
-                IRequestHandler<ConfirmEmailCommand, Response<string>>, IRequestHandler<LoginRequestDTO, Response<LoginResponseDTO>>
+                IRequestHandler<ConfirmEmailCommand, Response<string>>
+        ,IRequestHandler<LoginCommand, Response<LoginResponseDTO>>
+        ,IRequestHandler<RefreshTokenCommand,Response<LoginResponseDTO>>
+        , IRequestHandler<LogoutCommand, Response<string>>
+        , IRequestHandler<LogoutAllDevicesCommand, Response<string>>
+        , IRequestHandler<ForgetPasswordCommand, Response<string>>
+        , IRequestHandler<ResetPasswordCommand, Response<string>>
+        ,IRequestHandler<ExternalLoginCommand,Response<ExternalLoginResponseDTO>>
 
     {
         private readonly IIdentityService _identityService;
@@ -24,29 +31,56 @@ namespace ITIGraduationProject.Application.Features.Identitiy.Commands.Handlers
         public async Task<Response<string>> Handle(RegisterCommand request, CancellationToken cancellationToken)
         {
             var dto = _mapper.Map<RegisterRequestDTO>(request);
-
-            var Result = await _identityService.RegisterAsync(dto);
-            
-            if(Result != "Registration successful. Please check your email to confirm your account.")
-                    return BadRequest<string>(Result);
-            else
-
-                return Success<string>(Result, true);
+            return await _identityService.RegisterAsync(dto);
         }
-
         public async Task<Response<string>> Handle(ConfirmEmailCommand request, CancellationToken cancellationToken)
         {
-            var result = await _identityService.ConfirmEmailAsync(request.UserId, request.Token);
-
-            if (!result.Succeeded)
-                return BadRequest<string>(result.Message);
-
-            return Success<string>(null, result.Message);
+            return await _identityService.ConfirmEmailAsync(request.UserId, request.Token);
         }
-        public async Task<Response<LoginResponseDTO>> Handle(LoginRequestDTO request, CancellationToken cancellationToken)
+        public async Task<Response<LoginResponseDTO>> Handle(LoginCommand request, CancellationToken cancellationToken)
         {
             var dto = _mapper.Map<LoginRequestDTO>(request);
             return await _identityService.LoginAsync(dto);
         }
+
+        public async Task<Response<LoginResponseDTO>> Handle(RefreshTokenCommand request, CancellationToken cancellationToken)
+        {
+            return await _identityService.RefreshTokenAsync(request.RefreshToken);
+        }
+        public async Task<Response<string>> Handle(
+    LogoutCommand request,
+    CancellationToken cancellationToken)
+        {
+            return await _identityService.LogoutAsync(request.RefreshToken);
+        }
+        public async Task<Response<string>> Handle(
+    LogoutAllDevicesCommand request,
+    CancellationToken cancellationToken)
+        {
+            return await _identityService.LogoutAllDevicesAsync();
+        }
+        public async Task<Response<string>> Handle(
+    ForgetPasswordCommand request,
+    CancellationToken cancellationToken)
+        {
+            return await _identityService
+                .ForgetPasswordAsync(request.Email);
+        }
+        public async Task<Response<string>> Handle(
+    ResetPasswordCommand request,
+    CancellationToken cancellationToken)
+        {
+            return await _identityService.ResetPasswordAsync(
+                request.Email,
+                request.Token,
+                request.NewPassword);
+        }
+        public async Task<Response<ExternalLoginResponseDTO>> Handle(
+    ExternalLoginCommand request,
+    CancellationToken cancellationToken)
+        {
+            return await _identityService.ExternalLoginAsync();
+        }
     }
+
 }

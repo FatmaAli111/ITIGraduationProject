@@ -7,42 +7,50 @@ using ITIGraduationProject.Domain.Entities.ECommerce;
 using ITIGraduationProject.Domain.Entities.Identity;
 using ITIGraduationProject.Infrastructure.Identity;
 using ITIGraduationProject.Service.Identity.JWT;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace ITIGraduationProject.Service.Identity.Authantication
 {
-    public class IdentityService : IIdentityService
+    public class IdentityService : ResponseHandler, IIdentityService
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IEmailService _emailService;
         private readonly IConfiguration _configuration;
         private readonly IJwtService _jwtService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly SignInManager<ApplicationUser> _signInManager;
 
         public IdentityService(
                 UserManager<ApplicationUser> userManager,
                 IUnitOfWork unitOfWork, IEmailService emailService,
-                IConfiguration configuration, IJwtService JwtService)
+                IConfiguration configuration, IJwtService JwtService,
+                  IHttpContextAccessor httpContextAccessor
+            , SignInManager<ApplicationUser> signInManager)
         {
             _userManager = userManager;
             _unitOfWork = unitOfWork;
             _emailService = emailService;
             _configuration = configuration;
             _jwtService = JwtService;
+            _httpContextAccessor = httpContextAccessor;
+            _signInManager = signInManager;
         }
 
-        public async Task<string> RegisterAsync(RegisterRequestDTO request)
+        public async Task<Response<string>> RegisterAsync(RegisterRequestDTO request)
         {
             var existingUser = await _userManager.FindByEmailAsync(request.Email);
             if (existingUser != null)
-                return "Email already exists.";
+                return BadRequest<string>("Email already exists.");
 
             var newId = Guid.NewGuid();
 
@@ -72,7 +80,7 @@ namespace ITIGraduationProject.Service.Identity.Authantication
             {
                 _unitOfWork.Users.Delete(domainUser);
                 await _unitOfWork.SaveChangesAsync();
-                return string.Join(", ", result.Errors.Select(e => e.Description));
+                return BadRequest<string>(string.Join(", ", result.Errors.Select(e => e.Description)));
             }
 
             await _userManager.AddToRoleAsync(applicationUser, Roles.User);
@@ -87,30 +95,27 @@ namespace ITIGraduationProject.Service.Identity.Authantication
 
             await _emailService.SendEmailAsync(request.Email, "Confirm your email", body);
 
-            return "Registration successful. Please check your email to confirm your account.";
+            return Success<string>(applicationUser.Id.ToString(),
+                "Registration successful. Please check your email to confirm your account.");
         }
-        public async Task<IdentityResultDto> ConfirmEmailAsync(string userId, string token)
+
+        public async Task<Response<string>> ConfirmEmailAsync(string userId, string token)
         {
             if (!Guid.TryParse(userId, out var parsedUserId))
-                return new IdentityResultDto { Succeeded = false, Message = "Invalid user id." };
+                return BadRequest<string>("Invalid user id.");
 
             var applicationUser = await _userManager.FindByIdAsync(userId);
             if (applicationUser == null)
-                return new IdentityResultDto { Succeeded = false, Message = "User not found." };
+                return NotFound<string>("User not found.");
 
             if (applicationUser.EmailConfirmed)
-                return new IdentityResultDto { Succeeded = true, Message = "Email already confirmed." };
+                return Success<string>(null, "Email already confirmed.");
 
             var decodedToken = WebUtility.UrlDecode(token);
 
             var result = await _userManager.ConfirmEmailAsync(applicationUser, decodedToken);
             if (!result.Succeeded)
-                return new IdentityResultDto
-                {
-                    Succeeded = false,
-                    Message = "Email confirmation failed.",
-                    Errors = result.Errors.Select(e => e.Description).ToList()
-                };
+                return BadRequest<string>("Email confirmation failed.");
 
             var domainUser = await _unitOfWork.Users.GetByIdAsync(parsedUserId);
             if (domainUser != null)
@@ -120,37 +125,39 @@ namespace ITIGraduationProject.Service.Identity.Authantication
                 await _unitOfWork.SaveChangesAsync();
             }
 
-            return new IdentityResultDto { Succeeded = true, Message = "Email confirmed successfully." };
+            return Success<string>(null, "Email confirmed successfully.");
         }
 
         public async Task<Response<LoginResponseDTO>> LoginAsync(LoginRequestDTO request)
         {
             var applicationUser = await _userManager.FindByEmailAsync(request.Email);
             if (applicationUser == null)
-                return new Response<LoginResponseDTO>("Invalid email or password.")
-                {
-                    StatusCode = HttpStatusCode.Unauthorized
-                };
+                return Unauthorized<LoginResponseDTO>();
 
             if (!applicationUser.EmailConfirmed)
-                return new Response<LoginResponseDTO>("Please confirm your email first.")
-                {
-                    StatusCode = HttpStatusCode.Unauthorized
-                };
+                return BadRequest<LoginResponseDTO>("Please confirm your email first.");
+
+            if (await _userManager.IsLockedOutAsync(applicationUser))
+                return BadRequest<LoginResponseDTO>(
+                    $"Account locked. Try again after {applicationUser.LockoutEnd?.ToLocalTime():HH:mm}.");
 
             var isPasswordValid = await _userManager.CheckPasswordAsync(applicationUser, request.Password);
             if (!isPasswordValid)
-                return new Response<LoginResponseDTO>("Invalid email or password.")
-                {
-                    StatusCode = HttpStatusCode.Unauthorized
-                };
+            {
+                await _userManager.AccessFailedAsync(applicationUser);
+                applicationUser = await _userManager.FindByIdAsync(applicationUser.Id.ToString());
+
+                if (await _userManager.IsLockedOutAsync(applicationUser))
+                    return BadRequest<LoginResponseDTO>("Account locked due to multiple failed attempts. Try again after 15 minutes.");
+
+                return Unauthorized<LoginResponseDTO>();
+            }
+
+            await _userManager.ResetAccessFailedCountAsync(applicationUser);
 
             var domainUser = await _unitOfWork.Users.GetByIdAsync(applicationUser.Id);
             if (domainUser == null || !domainUser.IsActive)
-                return new Response<LoginResponseDTO>("Account is not active.")
-                {
-                    StatusCode = HttpStatusCode.Unauthorized
-                };
+                return BadRequest<LoginResponseDTO>("Account is not active.");
 
             var roles = await _userManager.GetRolesAsync(applicationUser);
 
@@ -159,19 +166,323 @@ namespace ITIGraduationProject.Service.Identity.Authantication
                 applicationUser.Email,
                 roles.ToList());
 
+            var refreshTokenValue = _jwtService.GenerateRefreshToken();
+
+            var refreshToken = new RefreshToken
+            {
+                UserId = applicationUser.Id,
+                Token = refreshTokenValue,
+                ExpiresAt = DateTime.UtcNow.AddDays(7),
+                IsRevoked = false
+            };
+
+            await _unitOfWork.RefreshTokens.AddAsync(refreshToken);
+            await _unitOfWork.SaveChangesAsync();
+
             var response = new LoginResponseDTO
             {
                 AccessToken = accessToken,
                 ExpiresAt = expiresAt,
+                RefreshToken = refreshTokenValue,
                 Email = applicationUser.Email,
                 Name = domainUser.Name,
                 Roles = roles.ToList()
             };
 
-            return new Response<LoginResponseDTO>(response, "Login successful.")
+            return Success(response, "Login successful.");
+        }
+        public async Task<Response<LoginResponseDTO>> RefreshTokenAsync(string refreshToken)
+        {
+            var storedToken = await _unitOfWork.RefreshTokens
+                .GetByTokenAsync(refreshToken);
+
+            if (storedToken == null)
+                return Unauthorized<LoginResponseDTO>();
+
+            if (storedToken.IsRevoked)
+                return Unauthorized<LoginResponseDTO>();
+
+            if (storedToken.ExpiresAt <= DateTime.UtcNow)
+                return Unauthorized<LoginResponseDTO>();
+
+            var applicationUser = await _userManager.FindByIdAsync(storedToken.UserId.ToString());
+
+            if (applicationUser == null)
+                return Unauthorized<LoginResponseDTO>();
+
+            var roles = await _userManager.GetRolesAsync(applicationUser);
+
+            var (accessToken, expiresAt) = _jwtService.GenerateToken(
+                applicationUser.Id.ToString(),
+                applicationUser.Email!,
+                roles.ToList());
+
+            // Rotation
+            storedToken.IsRevoked = true;
+
+            var newRefreshTokenValue = _jwtService.GenerateRefreshToken();
+
+            var newRefreshToken = new RefreshToken
             {
-                StatusCode = HttpStatusCode.OK
+                UserId = applicationUser.Id,
+                Token = newRefreshTokenValue,
+                ExpiresAt = DateTime.UtcNow.AddDays(7),
+                IsRevoked = false
             };
+
+            _unitOfWork.RefreshTokens.Update(storedToken);
+            await _unitOfWork.RefreshTokens.AddAsync(newRefreshToken);
+
+            await _unitOfWork.SaveChangesAsync();
+
+            var domainUser = await _unitOfWork.Users.GetByIdAsync(applicationUser.Id);
+
+            return Success(new LoginResponseDTO
+            {
+                AccessToken = accessToken,
+                ExpiresAt = expiresAt,
+                RefreshToken = newRefreshTokenValue,
+                Email = applicationUser.Email,
+                Name = domainUser?.Name,
+                Roles = roles.ToList()
+            });
+        }
+        public async Task<Response<string>> LogoutAsync(string refreshToken)
+        {
+            var storedToken = await _unitOfWork.RefreshTokens
+                .GetByTokenAsync(refreshToken);
+
+            if (storedToken == null)
+                return Unauthorized<string>();
+
+            storedToken.IsRevoked = true;
+
+            _unitOfWork.RefreshTokens.Update(storedToken);
+
+            await _unitOfWork.SaveChangesAsync();
+
+            return Success("Logged out successfully");
+        }
+        public async Task<Response<string>> LogoutAllDevicesAsync()
+        {
+            var userId = _httpContextAccessor.HttpContext?
+                .User
+                .FindFirst(ClaimTypes.NameIdentifier)?
+                .Value;
+
+            if (userId == null)
+                return Unauthorized<string>();
+
+
+            var tokens = await _unitOfWork.RefreshTokens
+                .GetUserTokensAsync(Guid.Parse(userId));
+
+
+            foreach (var token in tokens)
+            {
+                token.IsRevoked = true;
+            }
+            await _unitOfWork.SaveChangesAsync();
+
+
+            return Success("Logged out from all devices successfully");
+        }
+        public async Task<Response<string>> ForgetPasswordAsync(string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+
+            if (user == null)
+                return BadRequest<string>("User not found");
+
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+            var encodedToken = WebUtility.UrlEncode(token);
+
+            var resetLink =
+                $"{_configuration.GetSection("AppSettings:ClientBaseUrl").Value}/reset-password?email={user.Email}&token={encodedToken}";
+
+            var body =
+                $"<h3>Password Reset</h3>" +
+                $"<p>Click <a href='{resetLink}'>here</a> to reset your password.</p>";
+
+            await _emailService.SendEmailAsync(
+                user.Email!,
+                "Reset Password",
+                body);
+
+            return Success<string>(
+                null,
+                "Password reset link sent successfully.");
+        }
+        public async Task<Response<string>> ResetPasswordAsync(
+        string email,
+        string token,
+        string newPassword)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+
+            if (user == null)
+                return NotFound<string>("User not found.");
+
+            var decodedToken = WebUtility.UrlDecode(token);
+
+            var result = await _userManager.ResetPasswordAsync(
+                user,
+                decodedToken,
+                newPassword);
+
+            if (!result.Succeeded)
+                return BadRequest<string>(
+                    string.Join(", ", result.Errors.Select(x => x.Description)));
+
+            return Success<string>(
+                null,
+                "Password reset successfully.");
+        }
+
+        public async Task<Response<ExternalLoginResponseDTO>> ExternalLoginAsync()
+        {
+            var info = await _signInManager.GetExternalLoginInfoAsync();
+
+            if (info == null)
+                return BadRequest<ExternalLoginResponseDTO>(
+                    "External login failed.");
+
+
+            var email = info.Principal
+                .FindFirstValue(ClaimTypes.Email);
+
+
+            if (string.IsNullOrEmpty(email))
+                return BadRequest<ExternalLoginResponseDTO>(
+                    "Email not found from provider.");
+
+
+            var name = info.Principal
+                .FindFirstValue(ClaimTypes.Name);
+
+
+
+            var applicationUser =
+                await _userManager.FindByEmailAsync(email);
+
+
+
+            if (applicationUser == null)
+            {
+                var newId = Guid.NewGuid();
+
+
+                // Create Domain User
+                var domainUser = new User
+                {
+                    Id = newId,
+                    Name = name ?? email.Split('@')[0],
+                    IsActive = true,
+                    CurrentPointsBalance = 0,
+                    UserPreferences = new UserPreferences(),
+                    Cart = new Cart()
+                };
+
+
+                await _unitOfWork.Users.AddAsync(domainUser);
+
+
+
+                // Create Identity User
+                applicationUser = new ApplicationUser
+                {
+                    Id = newId,
+                    Email = email,
+                    UserName = email,
+                    EmailConfirmed = true
+                };
+
+
+                var result =
+                    await _userManager.CreateAsync(applicationUser);
+
+
+                if (!result.Succeeded)
+                {
+                    _unitOfWork.Users.Delete(domainUser);
+                    await _unitOfWork.SaveChangesAsync();
+
+                    return BadRequest<ExternalLoginResponseDTO>(
+                        string.Join(", ",
+                        result.Errors.Select(e => e.Description)));
+                }
+
+
+                await _userManager.AddToRoleAsync(
+                    applicationUser,
+                    Roles.User);
+            }
+
+
+
+            // Check if Google login already linked
+            var logins =
+                await _userManager.GetLoginsAsync(applicationUser);
+
+
+
+            if (!logins.Any(x =>
+                x.LoginProvider == info.LoginProvider))
+            {
+                await _userManager.AddLoginAsync(
+                    applicationUser,
+                    info);
+            }
+
+
+
+            // Generate JWT
+            var roles =
+                await _userManager.GetRolesAsync(applicationUser);
+
+
+            var (accessToken, expiresAt) =
+                _jwtService.GenerateToken(
+                    applicationUser.Id.ToString(),
+                    applicationUser.Email,
+                    roles.ToList());
+
+
+
+            // Generate Refresh Token
+            var refreshTokenValue =
+                _jwtService.GenerateRefreshToken();
+
+
+
+            var refreshToken = new RefreshToken
+            {
+                UserId = applicationUser.Id,
+                Token = refreshTokenValue,
+                ExpiresAt = DateTime.UtcNow.AddDays(7),
+                IsRevoked = false
+            };
+
+
+            await _unitOfWork.RefreshTokens.AddAsync(refreshToken);
+
+            await _unitOfWork.SaveChangesAsync();
+
+
+
+            var response = new ExternalLoginResponseDTO
+            {
+                Id = applicationUser.Id.ToString(),
+                Email = applicationUser.Email,
+                AccessToken = accessToken,
+                RefreshToken = refreshTokenValue
+            };
+
+
+            return Success(
+                response,
+                "External login successful.");
         }
     }
 }

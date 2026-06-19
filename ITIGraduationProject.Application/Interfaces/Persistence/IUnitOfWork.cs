@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using ITIGraduationProject.Application.Interfaces.Repositories;
 using ITIGraduationProject.Application.Repositories;
 using System.Threading.Tasks;
@@ -18,6 +19,7 @@ namespace ITIGraduationProject.Application.Interfaces.Persistence
         IRewardRepository Rewards { get; }
         IGraphicAssetRepository GraphicAssets { get; }
         INotificationRepository Notifications { get; }
+        IRefreshTokenRepository RefreshTokens { get; }
         ICategoryRepository Categories { get; }
 
 

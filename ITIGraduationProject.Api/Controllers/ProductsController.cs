@@ -15,7 +15,7 @@ namespace ITIGraduationProject.Api.Controllers
         {
             _mediator = mediator;
         }
-        [HttpGet]
+        [HttpGet("GetProducts")]
         public async Task<IActionResult> GetProducts(
             [FromQuery] GetProductsQuery query, CancellationToken ct)
         {
