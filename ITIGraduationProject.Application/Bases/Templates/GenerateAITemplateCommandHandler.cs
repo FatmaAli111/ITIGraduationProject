@@ -53,15 +53,17 @@ namespace ITIGraduationProject.Application.Bases.Templates
                 imageUrl = await _ai.GenerateTemplateImageAsync(new AIGenerateRequest
                 {
                     ProductName = product.Name,
-                    CategoryName = product.Category?.Name ?? "",
-                    StyleType = prefs.StyleType ?? "",
-                    FavoriteColors = prefs.FavoriteColors ?? "",
-                    Interests = prefs.Interests ?? "",
-                    DesignPreference = prefs.DesignPreference ?? "",
+                    CategoryName = product.Category?.Name ?? "Template1",
+                    StyleType = prefs.StyleType ?? "Sporty",
+                    FavoriteColors = prefs.FavoriteColors ?? "Blue",
+                    Interests = prefs.Interests ?? "Gym",
+                    DesignPreference = prefs.DesignPreference ?? "light",
                 }, ct);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Console.WriteLine($"AI Layer Error: {ex.Message}");
+                Console.WriteLine($"Stack: {ex.StackTrace}");
                 return BadRequest<TemplateDto>("AI service unavailable. Try again later.");
             }
 
@@ -71,7 +73,7 @@ namespace ITIGraduationProject.Application.Bases.Templates
                 CategoryId = product.CategoryId,
                 CreatorUserId = _currentUser.UserId,
                 Name = $"AI Design — {DateTime.UtcNow:MMM dd HH:mm}",
-                StyleTags = prefs.StyleType ?? "",
+                StyleTags = prefs.StyleType ?? "Sporty",
                 PreviewImageURL = imageUrl,   // ← the PNG URL from JigsawStack
                 IsPublic = false,
                 LikesCount = 0,

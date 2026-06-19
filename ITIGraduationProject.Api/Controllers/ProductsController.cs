@@ -1,7 +1,8 @@
-﻿using MediatR;
+﻿using ITIGraduationProject.Application.Wrapers.Shop.CQRS;
+using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using ITIGraduationProject.Application.Wrapers.Shop.CQRS;
 
 namespace ITIGraduationProject.Api.Controllers
 {
@@ -20,10 +21,26 @@ namespace ITIGraduationProject.Api.Controllers
         {
             return Ok(await _mediator.Send(query));
         }
+        [HttpGet("/:{id}")]
         public async Task<IActionResult> GetProductById(
-            [FromQuery] GetProductByIdQuery query, CancellationToken ct)
+            [FromRoute] GetProductByIdQuery query, CancellationToken ct)
         {
             return Ok(await _mediator.Send(query));
         }
+
+        // Admin only — same controller, just protected
+        [HttpPost]
+        [Authorize()]
+        public async Task<IActionResult> Create([FromBody] CreateProductCommand cmd)
+            => Ok(await _mediator.Send(cmd));
+        [HttpPut("{id:guid}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateProductCommand cmd)
+        => Ok(await _mediator.Send(cmd with { Id = id }));
+
+        [HttpDelete("{id:guid}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Delete(Guid id)
+            => Ok(await _mediator.Send(new DeleteProductCommand(id)));
     }
 }
