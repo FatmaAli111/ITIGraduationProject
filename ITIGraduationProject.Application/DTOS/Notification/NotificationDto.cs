@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ITIGraduationProject.Application.Features.Notification.Queries.DTOS
+namespace ITIGraduationProject.Application.DTOS.Notification
 {
     public class NotificationDto
     {
