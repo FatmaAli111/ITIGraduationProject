@@ -2,8 +2,10 @@
 using ITIGraduationProject.Application.Features.Studio.Commands.CreateDesign;
 using ITIGraduationProject.Application.Features.Studio.Commands.DeleteDesign;
 using ITIGraduationProject.Application.Features.Studio.Commands.UpdateDesign;
+using ITIGraduationProject.Application.Features.Studio.Queries.GetDesignById;
 using ITIGraduationProject.Application.Features.Studio.Queries.GetProductForCustomization;
 using ITIGraduationProject.Application.Features.Studio.Queries.GetStudioProducts;
+using ITIGraduationProject.Application.Features.Studio.Queries.GetUserDesigns;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -73,6 +75,25 @@ namespace ITIGraduationProject.Api.Controllers
             return NoContent();
         }
 
+        [HttpGet("{id:guid}")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DesignResponseDto))]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetDesignById([FromRoute] Guid id, CancellationToken cancellationToken)
+        {
+            var query = new GetDesignByIdQuery(id);
+            var result = await _mediator.Send(query, cancellationToken);
+            return Ok(result);
+        }
+
+        // 5. Get User Designs
+        [HttpGet("user/{userId:guid}")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<DesignResponseDto>))]
+        public async Task<IActionResult> GetUserDesigns([FromRoute] Guid userId, CancellationToken cancellationToken)
+        {
+            var query = new GetUserDesignsQuery(userId);
+            var result = await _mediator.Send(query, cancellationToken);
+            return Ok(result);
+        }
 
     }
 }
