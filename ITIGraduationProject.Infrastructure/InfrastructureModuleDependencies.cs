@@ -10,6 +10,7 @@ using ITIGraduationProject.Infrastructure.Persistence.Repositories;
 using ITIGraduationProject.Infrastructure.SignalR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -109,8 +110,9 @@ namespace ITIGraduationProject.Infrastructure
             services.AddScoped<ICurrentUserService, CurrentUserService>();
            //signalR
             services.AddSignalR();
-
+            services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();
             services.AddScoped<INotificationSender,SignalRNotificationSender>();
+
             services.AddScoped(typeof(IGenericRepo<>), typeof(GenericRepo<>));
 
             services.AddScoped<IProductRepository, ProductRepository>();
