@@ -28,6 +28,7 @@ namespace ITIGraduationProject.Infrastructure.Persistence.Repositories
         {
             return await _context.Designs
                 .AsNoTracking()
+                .Include(d => d.Product)
                 .Where(d => d.UserId == userId)
                 .ToListAsync();
         }

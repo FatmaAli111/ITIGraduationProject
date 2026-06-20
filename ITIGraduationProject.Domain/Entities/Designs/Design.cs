@@ -21,7 +21,7 @@ public class Design : BaseAuditableEntity
     public ProductSize? SelectedSize { get; set; }
     public FabricType? SelectedFabric { get; set; }
     public PrintMethodType? SelectedPrintMethod { get; set; }
-    public ProductAvailableColors SelectedColor { get; set; }
+    public string? SelectedColor { get; set; }
     public decimal CalculatedPrice { get; set; }
 
     public User User { get; set; } = null!;
