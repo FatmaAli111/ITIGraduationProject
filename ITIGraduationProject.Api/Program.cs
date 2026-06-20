@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using ITIGraduationProject.Infrastructure.SignalR;
 
 namespace ITIGraduationProject.Api
 {
@@ -61,14 +62,14 @@ namespace ITIGraduationProject.Api
     });
             });
 
-     var app = builder.Build();
+            var app = builder.Build();
+
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
             IdentitySeeder.SeedAsync(app.Services);
-
             app.UseSwagger();
             app.UseSwaggerUI(c =>
             {
@@ -86,6 +87,7 @@ namespace ITIGraduationProject.Api
 
 
             app.MapControllers();
+            app.MapHub<NotificationHub>("/hubs/notifications");
 
             app.Run();
         }

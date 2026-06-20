@@ -1,4 +1,5 @@
 ﻿using ITIGraduationProject.Application.Interfaces;
+using ITIGraduationProject.Application.Interfaces.IServices.Notification;
 using ITIGraduationProject.Application.Interfaces.Persistence;
 using ITIGraduationProject.Application.Interfaces.Repositories;
 using ITIGraduationProject.Application.Repositories;
@@ -6,6 +7,7 @@ using ITIGraduationProject.Domain.Entities;
 using ITIGraduationProject.Infrastructure.Identity;
 using ITIGraduationProject.Infrastructure.Persistence;
 using ITIGraduationProject.Infrastructure.Persistence.Repositories;
+using ITIGraduationProject.Infrastructure.SignalR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -41,7 +43,6 @@ namespace ITIGraduationProject.Infrastructure
             .AddDefaultTokenProviders();
 
             // Authentication (JWT + External Login Google & Facebook)
-
             services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -63,6 +64,23 @@ namespace ITIGraduationProject.Infrastructure
                IssuerSigningKey = new SymmetricSecurityKey(
                    Encoding.UTF8.GetBytes(
                        configuration["JwtSettings:SecretKey"]))
+           };
+           options.Events = new JwtBearerEvents
+           {
+               OnMessageReceived = context =>
+               {
+                   var accessToken = context.Request.Query["access_token"];
+
+                   var path = context.HttpContext.Request.Path;
+
+                   if (!string.IsNullOrEmpty(accessToken)
+                       && path.StartsWithSegments("/hubs/notifications"))
+                   {
+                       context.Token = accessToken;
+                   }
+
+                   return Task.CompletedTask;
+               }
            };
        })
        .AddGoogle(options =>
@@ -89,7 +107,10 @@ namespace ITIGraduationProject.Infrastructure
 
             services.AddHttpContextAccessor();
             services.AddScoped<ICurrentUserService, CurrentUserService>();
+           //signalR
+            services.AddSignalR();
 
+            services.AddScoped<INotificationSender,SignalRNotificationSender>();
             services.AddScoped(typeof(IGenericRepo<>), typeof(GenericRepo<>));
 
             services.AddScoped<IProductRepository, ProductRepository>();
