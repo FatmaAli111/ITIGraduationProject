@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 
-namespace ITIGraduationProject.Application.Features.Profiles.Commands.UpdateProfile
+namespace ITIGraduationProject.Application.Features.Profiles.Commands.Models
 {
     public class UpdateProfileCommand : IRequest<Response<string>>
     {

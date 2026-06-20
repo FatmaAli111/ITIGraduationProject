@@ -12,6 +12,7 @@ namespace ITIGraduationProject.Domain.Entities.ECommerce;
 public class Order : BaseAuditableEntity
 {
     public Guid UserId { get; set; }
+    public string OrderNumber { get; set; } = string.Empty;
     public Guid? RewardId { get; set; }
     public Guid? CouponId { get; set; }
     public string ReceiverName { get; set; } = string.Empty;

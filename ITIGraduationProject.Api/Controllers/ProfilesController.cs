@@ -1,11 +1,8 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using MediatR;
-using System.Threading.Tasks;
+using ITIGraduationProject.Application.Features.Profiles.Commands.Models;
+using ITIGraduationProject.Application.Features.Profiles.Queries.Models;
 
-using System.Net;
-using ITIGraduationProject.Application.Features.Profiles.Queries.GetProfile;
-using ITIGraduationProject.Application.Features.Profiles.Commands.UpdateProfile;
 
 namespace ITIGraduationProject.Api.Controllers
 {
@@ -36,14 +33,6 @@ namespace ITIGraduationProject.Api.Controllers
         public async Task<IActionResult> UpdateProfile([FromForm] UpdateProfileCommand command) {
 
             var response = await _mediator.Send(command);
-
-            if (response.StatusCode == HttpStatusCode.OK) {
-                return Ok(response);
-            }
-            if (response.StatusCode == HttpStatusCode.NotFound) {
-                return NotFound(response);
-            }
-
             return BadRequest(response);
         }
         // used [FromForm] because using IFormFile for Uploading the Profile Image

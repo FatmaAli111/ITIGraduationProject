@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ITIGraduationProject.Application.Features.Profiles.Queries.GetProfile
+namespace ITIGraduationProject.Application.DTOS.Profiles
 {
     public class ProfileDTO
     {

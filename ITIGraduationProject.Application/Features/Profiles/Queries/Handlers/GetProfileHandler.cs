@@ -1,4 +1,6 @@
 ﻿using ITIGraduationProject.Application.Bases;
+using ITIGraduationProject.Application.DTOS.Profiles;
+using ITIGraduationProject.Application.Features.Profiles.Queries.Models;
 using ITIGraduationProject.Application.Interfaces.Persistence;
 using Mapster;
 using MediatR;
@@ -6,9 +8,9 @@ using Microsoft.EntityFrameworkCore;
 
 
 
-namespace ITIGraduationProject.Application.Features.Profiles.Queries.GetProfile
+namespace ITIGraduationProject.Application.Features.Profiles.Queries.Handlers
 {
-    public class GetProfileHandler : IRequestHandler<GetProfileQuery, Response<ProfileDTO>>
+    public class GetProfileHandler : ResponseHandler , IRequestHandler<GetProfileQuery, Response<ProfileDTO>>
     {
         #region Dependency Injection
         private readonly IUnitOfWork _unitOfWork;
@@ -22,28 +24,13 @@ namespace ITIGraduationProject.Application.Features.Profiles.Queries.GetProfile
         #region Handle Method
         public async Task<Response<ProfileDTO>> Handle(GetProfileQuery request, CancellationToken cancellationToken){
 
-            if (!Guid.TryParse(request.UserId, out Guid userGuid))
-            {
-                return new Response<ProfileDTO>
-                {
-                    StatusCode = System.Net.HttpStatusCode.BadRequest,
-                    Succeeded = false,
-                    Message = "Invalid User ID format.",
-                    Data = null
-                };
-            }
+            var userGuid = Guid.Parse(request.UserId);
 
             var user = await _unitOfWork.Users.GetWithProfileCartAndPreferencesAsync(userGuid);
 
             if (user == null)
             {
-                return new Response<ProfileDTO>
-                {
-                    StatusCode = System.Net.HttpStatusCode.NotFound,
-                    Succeeded = false,
-                    Message = "User not found",
-                    Data = null
-                };
+                return NotFound<ProfileDTO>("User not found");
             }
 
             #region Mapster
@@ -75,13 +62,7 @@ namespace ITIGraduationProject.Application.Features.Profiles.Queries.GetProfile
             #endregion
 
             #region Response
-            return new Response<ProfileDTO>
-            {
-                StatusCode = System.Net.HttpStatusCode.OK,
-                Succeeded = true,
-                Message = "Profile retrieved successfully",
-                Data = profileDTO
-            };
+                return Success(profileDTO);
             #endregion
         }
         #endregion

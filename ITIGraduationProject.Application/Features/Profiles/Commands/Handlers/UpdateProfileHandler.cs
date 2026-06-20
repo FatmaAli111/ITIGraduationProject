@@ -11,12 +11,13 @@ using System.IO;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using ITIGraduationProject.Application.Features.Profiles.Commands.Models;
 
 
 
-namespace ITIGraduationProject.Application.Features.Profiles.Commands.UpdateProfile
+namespace ITIGraduationProject.Application.Features.Profiles.Commands.Handlers
 {
-    public class UpdateProfileHandler : IRequestHandler<UpdateProfileCommand, Response<string>> {
+    public class UpdateProfileHandler : ResponseHandler, IRequestHandler<UpdateProfileCommand, Response<string>> {
 
         #region Dependency Injection 
         private readonly IUnitOfWork _unitOfWork;
@@ -35,12 +36,7 @@ namespace ITIGraduationProject.Application.Features.Profiles.Commands.UpdateProf
 
             if (user == null)
             {
-                return new Response<string>
-                {
-                    StatusCode = HttpStatusCode.NotFound,
-                    Succeeded = false,
-                    Message = "User not found."
-                };
+                return NotFound<string>("User not found.");
             }
 
             #region Handling Images Profile to Save them in the folder
@@ -74,28 +70,16 @@ namespace ITIGraduationProject.Application.Features.Profiles.Commands.UpdateProf
             #endregion
 
             _unitOfWork.Users.Update(user);
-
             var result = await _unitOfWork.SaveChangesAsync();
 
             #region Updates Processes Result
 
             if (result > 0)
             {
-                return new Response<string>
-                {
-                    StatusCode = HttpStatusCode.OK,
-                    Succeeded = true,
-                    Message = "Profile updated successfully.",
-                    Data = "Success"
-                };
+                return Success("Success");
             }
 
-            return new Response<string>
-            {
-                StatusCode = HttpStatusCode.BadRequest,
-                Succeeded = false,
-                Message = "No changes were saved to the database."
-            };
+            return BadRequest<string>("No changes were saved to the database.");
             #endregion
         }
         #endregion

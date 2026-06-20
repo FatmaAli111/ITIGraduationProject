@@ -5,8 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using MediatR;
+using ITIGraduationProject.Application.DTOS.Profiles;
 
-namespace ITIGraduationProject.Application.Features.Profiles.Queries.GetProfile
+namespace ITIGraduationProject.Application.Features.Profiles.Queries.Models
 {
     public class GetProfileQuery : IRequest<Response<ProfileDTO>>
     {
