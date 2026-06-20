@@ -83,7 +83,7 @@ namespace ITIGraduationProject.Api
 
             app.UseAuthentication();  
             app.UseAuthorization();
-
+            app.UseStaticFiles(); // serves wwwroot/ contents
 
             app.MapControllers();
 

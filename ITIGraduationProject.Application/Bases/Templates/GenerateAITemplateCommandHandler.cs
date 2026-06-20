@@ -67,14 +67,24 @@ namespace ITIGraduationProject.Application.Bases.Templates
                 return BadRequest<TemplateDto>("AI service unavailable. Try again later.");
             }
 
-            // 4. Save template with the returned image URL
+            // 4. Download the image and save it to wwwroot
+            var fileName = $"{Guid.NewGuid()}.png";
+            var savePath = Path.Combine("wwwroot", "uploads", "templates", fileName);
+            Directory.CreateDirectory(Path.GetDirectoryName(savePath)!);
+
+            using var httpClient = new HttpClient();
+            var imageBytes = await httpClient.GetByteArrayAsync(imageUrl, ct);
+            await File.WriteAllBytesAsync(savePath, imageBytes, ct);
+
+            var permanentUrl = $"/uploads/templates/{fileName}"; // relative path, served by static files middleware
+
             var template = new Template
             {
                 CategoryId = product.CategoryId,
                 CreatorUserId = _currentUser.UserId,
                 Name = $"AI Design — {DateTime.UtcNow:MMM dd HH:mm}",
                 StyleTags = prefs.StyleType ?? "Sporty",
-                PreviewImageURL = imageUrl,   // ← the PNG URL from JigsawStack
+                PreviewImageURL = permanentUrl,   // ← the PNG path saved in wwwroot
                 IsPublic = false,
                 LikesCount = 0,
                 RemixesCount = 0,

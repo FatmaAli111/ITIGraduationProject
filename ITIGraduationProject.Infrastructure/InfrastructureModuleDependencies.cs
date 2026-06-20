@@ -73,20 +73,20 @@ namespace ITIGraduationProject.Infrastructure
            options.ClientSecret =
                configuration["Authentication:Google:ClientSecret"];
        });
-       //.AddFacebook(options =>
-       //{
-       //    options.AppId =
-       //        configuration["Authentication:Facebook:AppId"];
+            //.AddFacebook(options =>
+            //{
+            //    options.AppId =
+            //        configuration["Authentication:Facebook:AppId"];
 
-       //    //options.AppSecret =
-       //    //    configuration["Authentication:Facebook:Facebook:AppSecret"];
-       //});
+            //    //options.AppSecret =
+            //    //    configuration["Authentication:Facebook:Facebook:AppSecret"];
+            //});
             services.AddHttpClient<IAILayerClient, AILayerClient>(client =>
             {
                 client.BaseAddress = new Uri(configuration["AILayer:BaseUrl"]!);
-                client.Timeout = TimeSpan.FromSeconds(120); // image gen takes time
+                client.Timeout = TimeSpan.FromSeconds(300);
+                client.DefaultRequestHeaders.Add("x-api-key", configuration["AILayer:ApiKey"]);
             });
-
             services.AddHttpContextAccessor();
             services.AddScoped<ICurrentUserService, CurrentUserService>();
 

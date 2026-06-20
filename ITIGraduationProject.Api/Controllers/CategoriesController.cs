@@ -15,8 +15,13 @@ namespace ITIGraduationProject.Api.Controllers
         {
             _mediator = mediator;
         }
+
+        [HttpGet]
+        public async Task<IActionResult> GetCategories([FromQuery] GetCategoriesQuery query)
+            => Ok(await _mediator.Send(query));
+
         [HttpPost]
-        [Authorize()]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create([FromBody] CreateCategoryCommand cmd)
             => Ok(await _mediator.Send(cmd));
 

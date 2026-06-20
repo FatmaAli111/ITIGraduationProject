@@ -13,16 +13,9 @@ namespace ITIGraduationProject.Api.Controllers
         private readonly IMediator _mediator;
         public TemplatesController(IMediator mediator) => _mediator = mediator;
 
-        [HttpPost("generate")]
-        public async Task<IActionResult> Generate([FromBody] GenerateAITemplateCommand cmd)
-        {
-            var result = await _mediator.Send(cmd);
-            return StatusCode((int)result.StatusCode, result);
-        }
-
         [HttpGet]
         public async Task<IActionResult> GetPublicTemplates([FromQuery] GetPublicTemplatesQuery query)
-        => Ok(await _mediator.Send(query));
+            => Ok(await _mediator.Send(query));
 
         [HttpGet("{id:guid}")]
         public async Task<IActionResult> GetById(Guid id)

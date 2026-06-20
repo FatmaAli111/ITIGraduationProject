@@ -23,6 +23,11 @@ namespace ITIGraduationProject.Application.Bases.Shop
         public async Task<Response<CategoryDto>> Handle(
             CreateCategoryCommand cmd, CancellationToken ct)
         {
+            var IsCategoryExist = _uow.Categories.GetTableNoTracking().Any(c => c.Name == cmd.Name && !c.IsDeleted);
+            if (IsCategoryExist)
+            {
+                return BadRequest<CategoryDto>("Category already exists");
+            }
             var category = new Category
             {
                 Name = cmd.Name,
