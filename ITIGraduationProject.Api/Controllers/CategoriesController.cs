@@ -1,5 +1,9 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using MediatR;
+using ITIGraduationProject.Application.Features.Shop.Queries.Models;
+using ITIGraduationProject.Application.Features.Shop.Commands.Models;
 
 namespace ITIGraduationProject.Api.Controllers
 {
@@ -7,5 +11,29 @@ namespace ITIGraduationProject.Api.Controllers
     [ApiController]
     public class CategoriesController : ControllerBase
     {
+        private readonly IMediator _mediator;
+        public CategoriesController(IMediator mediator)
+        {
+            _mediator = mediator;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetCategories([FromQuery] GetCategoriesQuery query)
+            => Ok(await _mediator.Send(query));
+
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Create([FromBody] CreateCategoryCommand cmd)
+            => Ok(await _mediator.Send(cmd));
+
+        [HttpPut("{id:guid}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateCategoryCommand cmd)
+            => Ok(await _mediator.Send(cmd with { Id = id }));
+
+        [HttpDelete("{id:guid}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Delete(Guid id)
+            => Ok(await _mediator.Send(new DeleteCategoryCommand(id)));
     }
 }

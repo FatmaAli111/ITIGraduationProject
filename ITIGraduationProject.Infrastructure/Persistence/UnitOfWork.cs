@@ -1,7 +1,8 @@
-using System.Threading.Tasks;
 using ITIGraduationProject.Application.Interfaces.Persistence;
 using ITIGraduationProject.Application.Interfaces.Repositories;
 using ITIGraduationProject.Application.Repositories;
+using ITIGraduationProject.Infrastructure.Persistence.Repositories;
+using System.Threading.Tasks;
 
 namespace ITIGraduationProject.Infrastructure.Persistence
 {
@@ -22,6 +23,10 @@ namespace ITIGraduationProject.Infrastructure.Persistence
         public IGraphicAssetRepository GraphicAssets { get; }
         public INotificationRepository Notifications { get; }
         public IRefreshTokenRepository RefreshTokens { get; }
+
+        public ICategoryRepository Categories =>
+        _categories ??= new CategoryRepository(_context);
+        private ICategoryRepository? _categories;
 
         public UnitOfWork(
             AppDbContext context,

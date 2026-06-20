@@ -36,19 +36,31 @@ public class AILayerClient : IAILayerClient
             $"/api/v1/run/{_flowId}?stream=false", payload, ct);
 
         response.EnsureSuccessStatusCode();
+        var raw = await response.Content.ReadAsStringAsync(ct);
+        var root = JsonDocument.Parse(raw).RootElement;
 
-        var json = await response.Content.ReadFromJsonAsync<JsonElement>(ct);
 
-        // Langflow wraps the result: outputs[0].outputs[0].results.message.data.data.url
-        var imageUrl = json
+        // Step 1: navigate to the actual response shape
+        var innerText = root
             .GetProperty("outputs")[0]
             .GetProperty("outputs")[0]
             .GetProperty("results")
             .GetProperty("message")
-            .GetProperty("data")
-            .GetProperty("data")
-            .GetProperty("url")
+            .GetProperty("text")
             .GetString();
+
+        if (string.IsNullOrWhiteSpace(innerText))
+            throw new Exception("AI layer returned empty response");
+
+        // Step 2: strip the ```json ... ``` markdown fence
+        var cleaned = innerText
+            .Replace("```json", "")
+            .Replace("```", "")
+            .Trim();
+
+        // Step 3: parse the inner JSON to get the actual image URL
+        var innerJson = JsonDocument.Parse(cleaned).RootElement;
+        var imageUrl = innerJson.GetProperty("url").GetString();
 
         return imageUrl ?? throw new Exception("AI layer returned no image URL");
     }

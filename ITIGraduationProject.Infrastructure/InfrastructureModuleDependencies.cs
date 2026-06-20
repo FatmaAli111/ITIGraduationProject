@@ -1,4 +1,5 @@
 ﻿using ITIGraduationProject.Application.Interfaces;
+using ITIGraduationProject.Application.Interfaces.IServices.Notification;
 using ITIGraduationProject.Application.Interfaces.Persistence;
 using ITIGraduationProject.Application.Interfaces.Repositories;
 using ITIGraduationProject.Application.Repositories;
@@ -6,8 +7,10 @@ using ITIGraduationProject.Domain.Entities;
 using ITIGraduationProject.Infrastructure.Identity;
 using ITIGraduationProject.Infrastructure.Persistence;
 using ITIGraduationProject.Infrastructure.Persistence.Repositories;
+using ITIGraduationProject.Infrastructure.SignalR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -41,7 +44,6 @@ namespace ITIGraduationProject.Infrastructure
             .AddDefaultTokenProviders();
 
             // Authentication (JWT + External Login Google & Facebook)
-
             services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -64,6 +66,23 @@ namespace ITIGraduationProject.Infrastructure
                    Encoding.UTF8.GetBytes(
                        configuration["JwtSettings:SecretKey"]))
            };
+           options.Events = new JwtBearerEvents
+           {
+               OnMessageReceived = context =>
+               {
+                   var accessToken = context.Request.Query["access_token"];
+
+                   var path = context.HttpContext.Request.Path;
+
+                   if (!string.IsNullOrEmpty(accessToken)
+                       && path.StartsWithSegments("/hubs/notifications"))
+                   {
+                       context.Token = accessToken;
+                   }
+
+                   return Task.CompletedTask;
+               }
+           };
        })
        .AddGoogle(options =>
        {
@@ -73,22 +92,26 @@ namespace ITIGraduationProject.Infrastructure
            options.ClientSecret =
                configuration["Authentication:Google:ClientSecret"];
        });
-       //.AddFacebook(options =>
-       //{
-       //    options.AppId =
-       //        configuration["Authentication:Facebook:AppId"];
+            //.AddFacebook(options =>
+            //{
+            //    options.AppId =
+            //        configuration["Authentication:Facebook:AppId"];
 
-       //    //options.AppSecret =
-       //    //    configuration["Authentication:Facebook:Facebook:AppSecret"];
-       //});
+            //    //options.AppSecret =
+            //    //    configuration["Authentication:Facebook:Facebook:AppSecret"];
+            //});
             services.AddHttpClient<IAILayerClient, AILayerClient>(client =>
             {
                 client.BaseAddress = new Uri(configuration["AILayer:BaseUrl"]!);
-                client.Timeout = TimeSpan.FromSeconds(120); // image gen takes time
+                client.Timeout = TimeSpan.FromSeconds(300);
+                client.DefaultRequestHeaders.Add("x-api-key", configuration["AILayer:ApiKey"]);
             });
-
             services.AddHttpContextAccessor();
             services.AddScoped<ICurrentUserService, CurrentUserService>();
+           //signalR
+            services.AddSignalR();
+            services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();
+            services.AddScoped<INotificationSender,SignalRNotificationSender>();
 
             services.AddScoped(typeof(IGenericRepo<>), typeof(GenericRepo<>));
 

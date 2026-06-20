@@ -1,4 +1,5 @@
-﻿using ITIGraduationProject.Application.Wrapers.Templates.CQRS;
+﻿using ITIGraduationProject.Application.Features.Templates.Commands.Models;
+using ITIGraduationProject.Application.Features.Templates.Queries.Models;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -8,22 +9,14 @@ namespace ITIGraduationProject.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    //[Authorize]
     public class TemplatesController : ControllerBase
     {
         private readonly IMediator _mediator;
         public TemplatesController(IMediator mediator) => _mediator = mediator;
 
-        [HttpPost("generate")]
-        public async Task<IActionResult> Generate([FromBody] GenerateAITemplateCommand cmd)
-        {
-            var result = await _mediator.Send(cmd);
-            return StatusCode((int)result.StatusCode, result);
-        }
-
         [HttpGet]
         public async Task<IActionResult> GetPublicTemplates([FromQuery] GetPublicTemplatesQuery query)
-        => Ok(await _mediator.Send(query));
+            => Ok(await _mediator.Send(query));
 
         [HttpGet("{id:guid}")]
         public async Task<IActionResult> GetById(Guid id)
