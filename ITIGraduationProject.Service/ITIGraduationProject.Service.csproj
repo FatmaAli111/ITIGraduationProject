@@ -17,7 +17,6 @@
   <ItemGroup>
     <ProjectReference Include="..\ITIGraduationProject.Domain\ITIGraduationProject.Domain.csproj" />
     <ProjectReference Include="..\ITIGraduationProject.Infrastructure\ITIGraduationProject.Infrastructure.csproj" />
-	  <ProjectReference Include="..\ITIGraduationProject.Application\ITIGraduationProject.Application.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,4 +1,5 @@
-﻿using ITIGraduationProject.Application.Features.Notification.Queries.DTOS;
+﻿using ITIGraduationProject.Application.Bases;
+using ITIGraduationProject.Application.DTOS.Notification;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -9,5 +10,5 @@ using System.Threading.Tasks;
 namespace ITIGraduationProject.Application.Features.Notification.Queries.Models
 {
     public record GetUnreadNotificationsQuery()
-      : IRequest<List<NotificationDto>>;
+      : IRequest<Response<List<NotificationDto>>>;
 }

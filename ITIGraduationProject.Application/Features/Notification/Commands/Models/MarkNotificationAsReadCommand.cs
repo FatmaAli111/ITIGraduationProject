@@ -1,4 +1,5 @@
-﻿using MediatR;
+﻿using ITIGraduationProject.Application.Bases;
+using MediatR;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,5 +10,5 @@ namespace ITIGraduationProject.Application.Features.Notification.Commands.Models
 {
     public record MarkNotificationAsReadCommand(
       Guid NotificationId)
-      : IRequest<bool>;
+      : IRequest<Response<bool>>;
 }

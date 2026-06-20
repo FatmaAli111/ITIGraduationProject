@@ -69,7 +69,7 @@ namespace ITIGraduationProject.Api
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
-            IdentitySeeder.SeedAsync(app.Services);
+            //IdentitySeeder.SeedAsync(app.Services);
             app.UseSwagger();
             app.UseSwaggerUI(c =>
             {
