@@ -1,4 +1,8 @@
-﻿using ITIGraduationProject.Application.Features.Studio.Queries.GetProductForCustomization;
+﻿using ITIGraduationProject.Application.CQRS.Commands;
+using ITIGraduationProject.Application.Features.Studio.Commands.CreateDesign;
+using ITIGraduationProject.Application.Features.Studio.Commands.DeleteDesign;
+using ITIGraduationProject.Application.Features.Studio.Commands.UpdateDesign;
+using ITIGraduationProject.Application.Features.Studio.Queries.GetProductForCustomization;
 using ITIGraduationProject.Application.Features.Studio.Queries.GetStudioProducts;
 using MediatR;
 using Microsoft.AspNetCore.Http;
@@ -35,5 +39,40 @@ namespace ITIGraduationProject.Api.Controllers
             var result = await _mediator.Send(query, cancellationToken);
             return Ok(result);
         }
+
+        [HttpPost]
+        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(Guid))]
+        public async Task<IActionResult> CreateDesign([FromBody] CreateDesignCommand command, CancellationToken cancellationToken)
+        {
+            var designId = await _mediator.Send(command, cancellationToken);
+            return CreatedAtAction(nameof(CreateDesign), new { id = designId }, designId);
+        }
+
+        [HttpPut("{id:guid}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> UpdateDesign([FromRoute] Guid id, [FromBody] UpdateDesignCommand command, CancellationToken cancellationToken)
+        {
+            if (id != command.Id)
+            {
+                return BadRequest("Mismatch between route id and body id.");
+            }
+
+            await _mediator.Send(command, cancellationToken);
+            return NoContent();
+        }
+
+        [HttpDelete("{id:guid}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> DeleteDesign([FromRoute] Guid id, CancellationToken cancellationToken)
+        {
+            var command = new DeleteDesignCommand(id);
+            await _mediator.Send(command, cancellationToken);
+            return NoContent();
+        }
+
+
     }
 }
