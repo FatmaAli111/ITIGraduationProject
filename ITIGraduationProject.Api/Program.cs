@@ -1,5 +1,5 @@
 using ITIGraduationProject.Application;
-using ITIGraduationProject.Application.Middlewares;
+using ITIGraduationProject.Api.Middlewares;
 using ITIGraduationProject.Infrastructure;
 using ITIGraduationProject.Infrastructure.Identity;
 using ITIGraduationProject.Infrastructure.Persistence;
