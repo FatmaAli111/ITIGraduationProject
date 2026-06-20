@@ -1,8 +1,9 @@
-﻿using ITIGraduationProject.Application.Wrapers.Shop.CQRS;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using MediatR;
+using ITIGraduationProject.Application.Features.Shop.Queries.Models;
+using ITIGraduationProject.Application.Features.Shop.Commands.Models;
 
 namespace ITIGraduationProject.Api.Controllers
 {

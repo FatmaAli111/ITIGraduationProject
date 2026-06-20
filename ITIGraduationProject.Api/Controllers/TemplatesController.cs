@@ -1,4 +1,5 @@
-﻿using ITIGraduationProject.Application.Wrapers.Templates.CQRS;
+﻿using ITIGraduationProject.Application.Features.Templates.Commands.Models;
+using ITIGraduationProject.Application.Features.Templates.Queries.Models;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
