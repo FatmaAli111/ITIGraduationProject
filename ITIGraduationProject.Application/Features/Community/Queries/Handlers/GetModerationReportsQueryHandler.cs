@@ -3,8 +3,8 @@ using ITIGraduationProject.Application.DTOS.CommunityDTOs;
 using ITIGraduationProject.Application.Features.Community.Queries.Models;
 using ITIGraduationProject.Application.Interfaces.Persistence;
 using ITIGraduationProject.Application.Wrapers;
+using Mapster;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -29,23 +29,11 @@ namespace ITIGraduationProject.Application.Features.Community.Queries.Handlers
             if (request.Status.HasValue)
                 query = query.Where(r => r.Status == request.Status.Value);
 
-            var projected = query
+            var result = await query
                 .OrderByDescending(r => r.CreatedAt)
-                .Select(r => new ModerationReportDto
-                {
-                    Id = r.Id,
-                    ReporterUserId = r.ReporterUserId,
-                    ReporterName = r.ReporterUser.Name,
-                    TargetTemplateId = r.TargetTemplateId,
-                    TargetTemplateName = r.TargetTemplate.Name,
-                    Reason = r.Reason,
-                    Status = r.Status.ToString(),
-                    ActionTaken = r.ActionTaken,
-                    ResolvedAt = r.ResolvedAt,
-                    CreatedAt = r.CreatedAt
-                });
+                .ProjectToType<ModerationReportDto>()
+                .ToPaginatedListAsync(request.PageNumber, request.PageSize);
 
-            var result = await projected.ToPaginatedListAsync(request.PageNumber, request.PageSize);
             return Success(result);
         }
     }

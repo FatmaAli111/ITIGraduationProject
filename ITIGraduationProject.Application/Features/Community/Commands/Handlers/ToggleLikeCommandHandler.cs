@@ -1,7 +1,9 @@
 using ITIGraduationProject.Application.Bases;
 using ITIGraduationProject.Application.DTOS.CommunityDTOs;
+using ITIGraduationProject.Application.Features.Community;
 using ITIGraduationProject.Application.Features.Community.Commands.Models;
 using ITIGraduationProject.Application.Interfaces;
+using ITIGraduationProject.Application.Interfaces.IServices.Notification;
 using ITIGraduationProject.Application.Interfaces.Persistence;
 using ITIGraduationProject.Domain.Entities.AIAndModeration;
 using ITIGraduationProject.Domain.Enums;
@@ -19,9 +21,13 @@ namespace ITIGraduationProject.Application.Features.Community.Commands.Handlers
     {
         private readonly IUnitOfWork _uow;
         private readonly ICurrentUserService _currentUser;
+        private readonly INotificationService _notificationService;
 
-        public ToggleLikeCommandHandler(IUnitOfWork uow, ICurrentUserService currentUser)
-            => (_uow, _currentUser) = (uow, currentUser);
+        public ToggleLikeCommandHandler(
+            IUnitOfWork uow,
+            ICurrentUserService currentUser,
+            INotificationService notificationService)
+            => (_uow, _currentUser, _notificationService) = (uow, currentUser, notificationService);
 
         public async Task<Response<LikeStatusDto>> Handle(
             ToggleLikeCommand cmd, CancellationToken ct)
@@ -61,6 +67,18 @@ namespace ITIGraduationProject.Application.Features.Community.Commands.Handlers
             template.LikesCount++;
             _uow.Templates.Update(template);
             await _uow.SaveChangesAsync();
+
+            if (template.CreatorUserId != _currentUser.UserId)
+            {
+                var actor = await _uow.Users.GetByIdAsync(_currentUser.UserId);
+                var actorName = actor?.Name ?? "Someone";
+                await CommunityNotificationHelper.TrySendAsync(
+                    _notificationService,
+                    template.CreatorUserId,
+                    "New like",
+                    $"{actorName} liked your template \"{template.Name}\".",
+                    NotificationType.TemplateLiked);
+            }
 
             return Success(new LikeStatusDto { Liked = true, Count = template.LikesCount });
         }

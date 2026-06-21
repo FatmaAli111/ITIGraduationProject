@@ -1,7 +1,9 @@
 using ITIGraduationProject.Application.Bases;
 using ITIGraduationProject.Application.DTOS.CommunityDTOs;
+using ITIGraduationProject.Application.Features.Community;
 using ITIGraduationProject.Application.Features.Community.Commands.Models;
 using ITIGraduationProject.Application.Interfaces;
+using ITIGraduationProject.Application.Interfaces.IServices.Notification;
 using ITIGraduationProject.Application.Interfaces.Persistence;
 using ITIGraduationProject.Domain.Entities.AIAndModeration;
 using ITIGraduationProject.Domain.Enums;
@@ -18,9 +20,13 @@ namespace ITIGraduationProject.Application.Features.Community.Commands.Handlers
     {
         private readonly IUnitOfWork _uow;
         private readonly ICurrentUserService _currentUser;
+        private readonly INotificationService _notificationService;
 
-        public AddCommentCommandHandler(IUnitOfWork uow, ICurrentUserService currentUser)
-            => (_uow, _currentUser) = (uow, currentUser);
+        public AddCommentCommandHandler(
+            IUnitOfWork uow,
+            ICurrentUserService currentUser,
+            INotificationService notificationService)
+            => (_uow, _currentUser, _notificationService) = (uow, currentUser, notificationService);
 
         public async Task<Response<CommentDto>> Handle(
             AddCommentCommand cmd, CancellationToken ct)
@@ -41,9 +47,21 @@ namespace ITIGraduationProject.Application.Features.Community.Commands.Handlers
             await _uow.SaveChangesAsync();
 
             var user = await _uow.Users.GetByIdAsync(_currentUser.UserId);
+            if (user is not null)
+                comment.User = user;
+
             var dto = comment.Adapt<CommentDto>();
-            dto.UserName = user?.Name ?? string.Empty;
-            dto.UserProfileImageUrl = user?.ProfileImageUrl;
+
+            if (template.CreatorUserId != _currentUser.UserId)
+            {
+                var actorName = user?.Name ?? "Someone";
+                await CommunityNotificationHelper.TrySendAsync(
+                    _notificationService,
+                    template.CreatorUserId,
+                    "New comment",
+                    $"{actorName} commented on your template \"{template.Name}\".",
+                    NotificationType.TemplateCommented);
+            }
 
             return Created(dto);
         }
