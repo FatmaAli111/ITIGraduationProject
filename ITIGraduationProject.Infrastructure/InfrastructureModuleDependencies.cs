@@ -1,5 +1,6 @@
 ﻿using ITIGraduationProject.Application.Interfaces;
 using ITIGraduationProject.Application.Interfaces.IServices.Notification;
+using ITIGraduationProject.Application.Interfaces.IServices.StudioServices;
 using ITIGraduationProject.Application.Interfaces.Persistence;
 using ITIGraduationProject.Application.Interfaces.Repositories;
 using ITIGraduationProject.Application.Repositories;

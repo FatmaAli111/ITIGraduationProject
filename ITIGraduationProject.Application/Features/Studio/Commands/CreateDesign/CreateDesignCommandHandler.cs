@@ -8,32 +8,36 @@ using ITIGraduationProject.Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Mapster;
+using ITIGraduationProject.Application.Interfaces.IServices.StudioServices;
 
 namespace ITIGraduationProject.Application.Features.Studio.Commands.CreateDesign;
 
 public class CreateDesignCommandHandler : IRequestHandler<CreateDesignCommand, Guid>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IPriceCalculation _priceCalculationService;
 
-    public CreateDesignCommandHandler(IUnitOfWork _unitOfWork)
+    public CreateDesignCommandHandler(IUnitOfWork unitOfWork, IPriceCalculation priceCalculationService)
     {
-        this._unitOfWork = _unitOfWork;
+        _unitOfWork = unitOfWork;
+        _priceCalculationService = priceCalculationService;
     }
 
     public async Task<Guid> Handle(CreateDesignCommand request, CancellationToken cancellationToken)
     {
-        var product = await _unitOfWork.Products
-            .GetTableNoTracking()
-            .FirstOrDefaultAsync(p => p.Id == request.ProductId, cancellationToken);
-
-        if (product == null)
-        {
-            throw new KeyNotFoundException($"Entity \"{nameof(Product)}\" ({request.ProductId}) was not found.");
-        }
-
-        decimal calculatedPrice = product.BasePrice;
-
         var design = request.Adapt<Design>();
+
+        design.Id = Guid.NewGuid();
+        design.Status = DesignStatus.Draft;
+
+     
+        design.CalculatedPrice = await _priceCalculationService.CalculatePriceAsync(
+            request.ProductId,
+            request.SelectedFabric,
+            request.SelectedPrintMethod,
+            request.SelectedSize,
+            cancellationToken
+        );
 
         await _unitOfWork.Designs.AddAsync(design);
         await _unitOfWork.SaveChangesAsync();

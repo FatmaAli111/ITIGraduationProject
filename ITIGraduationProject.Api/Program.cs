@@ -1,9 +1,11 @@
-using ITIGraduationProject.Application;
 using ITIGraduationProject.Api.Middlewares;
+using ITIGraduationProject.Application;
+using ITIGraduationProject.Application.Interfaces.IServices.StudioServices;
 using ITIGraduationProject.Infrastructure;
 using ITIGraduationProject.Infrastructure.Identity;
 using ITIGraduationProject.Infrastructure.Persistence;
 using ITIGraduationProject.Service;
+using ITIGraduationProject.Service.Studio;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -34,6 +36,7 @@ namespace ITIGraduationProject.Api
             builder.Services.AddServiceModuleDependencies(builder.Configuration);
             builder.Services.AddInfrastructureModuleDependencies(builder.Configuration);
             builder.Services.AddApplicationModuleDependencies();
+            builder.Services.AddScoped<IPriceCalculation, PriceCalculationService>();
             builder.Services.AddSwaggerGen(options =>
             {
                 options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
