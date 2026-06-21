@@ -2,6 +2,7 @@
 using ITIGraduationProject.Application.Features.Identitiy.Commands.Handlers;
 using ITIGraduationProject.Application.Features.Identitiy.Commands.Validators.ITIGraduationProject.Application.Behaviors;
 using ITIGraduationProject.Application.Features.Identity.Commands.Validators;
+using ITIGraduationProject.Application.Interfaces.IServices.StudioServices;
 using Mapster;
 using MapsterMapper;
 using MediatR;
@@ -26,6 +27,7 @@ namespace ITIGraduationProject.Application
             services.AddMapster();
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
             services.AddValidatorsFromAssembly(typeof(RegisterCommandValidator).Assembly);
+            
         }
     }
 }
