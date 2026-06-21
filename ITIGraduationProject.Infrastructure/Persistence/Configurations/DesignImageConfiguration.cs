@@ -13,7 +13,7 @@ public class DesignImageConfiguration : IEntityTypeConfiguration<DesignImage>
         builder.HasKey(di => di.Id);
 
         builder.Property(di => di.ImageUrl).IsRequired().HasMaxLength(500);
-        builder.Property(di => di.IsPrimary).HasColumnType("int");
+        builder.Property(di => di.IsPrimary).IsRequired();
         builder.Property(di => di.DesignId).IsRequired();
         
 

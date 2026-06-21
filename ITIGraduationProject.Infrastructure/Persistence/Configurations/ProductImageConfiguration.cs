@@ -17,7 +17,9 @@ public class ProductImageConfiguration : IEntityTypeConfiguration<ProductImage>
         builder.Property(pi => pi.IsPrimary).IsRequired();
         builder.Property(pi => pi.DisplayOrder).IsRequired();
         builder.Property(pi => pi.ProductId).IsRequired();
-        builder.Property(pi => pi.Color).HasColumnType("int");
+        builder.Property(pi => pi.Color)
+            .HasConversion<int>()
+            .HasColumnType("int");
 
 
     }
