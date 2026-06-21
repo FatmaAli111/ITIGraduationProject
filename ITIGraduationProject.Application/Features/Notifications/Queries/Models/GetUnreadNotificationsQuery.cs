@@ -7,8 +7,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ITIGraduationProject.Application.Features.Notification.Queries.Models
+namespace ITIGraduationProject.Application.Features.Notifications.Queries.Models
 {
-    public record GetNotificationsQuery()
-     : IRequest<Response<List<NotificationDto>>>;
+    public record GetUnreadNotificationsQuery()
+      : IRequest<Response<List<NotificationDto>>>;
 }

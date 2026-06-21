@@ -1,5 +1,4 @@
 ﻿using ITIGraduationProject.Application.Bases;
-using ITIGraduationProject.Application.Features.Notification.Commands.Models;
 using ITIGraduationProject.Application.Interfaces.IServices.Notification;
 using ITIGraduationProject.Application.Interfaces;
 using MediatR;
@@ -8,8 +7,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ITIGraduationProject.Application.Features.Notifications.Commands.Models;
 
-namespace ITIGraduationProject.Application.Features.Notification.Commands.Handlers
+namespace ITIGraduationProject.Application.Features.Notifications.Commands.Handlers
 {
     public class NotificationCommandHandler : ResponseHandler,
            IRequestHandler<MarkNotificationAsReadCommand, Response<bool>>,

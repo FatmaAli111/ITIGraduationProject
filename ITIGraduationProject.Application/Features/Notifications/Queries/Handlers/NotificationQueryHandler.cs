@@ -1,11 +1,11 @@
 ﻿using ITIGraduationProject.Application.Bases;
 using ITIGraduationProject.Application.DTOS.Notification;
-using ITIGraduationProject.Application.Features.Notification.Queries.Models;
 using ITIGraduationProject.Application.Interfaces.IServices.Notification;
 using ITIGraduationProject.Application.Interfaces;
 using MediatR;
+using ITIGraduationProject.Application.Features.Notifications.Queries.Models;
 
-namespace ITIGraduationProject.Application.Features.Notification.Queries.Handlers
+namespace ITIGraduationProject.Application.Features.Notifications.Queries.Handlers
 {
     public class NotificationQueryHandler : ResponseHandler,
           IRequestHandler<GetNotificationsQuery, Response<List<NotificationDto>>>,

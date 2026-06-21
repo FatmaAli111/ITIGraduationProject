@@ -78,7 +78,7 @@ namespace ITIGraduationProject.Application.Features.Rewards.Commands.Handlers
             {
                 Id = Guid.NewGuid(),
                 UserId = topUser.Id,
-                Type = NotificationType.RewardEarned,
+                Type = NotificationType.NewMessage,
                 Title = "🎉 Congratulations! You achieved 1st Place",
                 Message = $"Great job {topUser.Name}! You are officially the #1 designer on the platform based on your design interactions. A new achievement badge has been added to your profile!",
                 IsRead = false

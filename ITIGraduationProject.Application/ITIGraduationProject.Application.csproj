@@ -21,6 +21,7 @@
 
   <ItemGroup>
     <Folder Include="Features\Identitiy\Queries\" />
+    <Folder Include="Features\Notification\" />
   </ItemGroup>
 
 </Project>

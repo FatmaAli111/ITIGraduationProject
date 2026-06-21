@@ -6,8 +6,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ITIGraduationProject.Application.Features.Notification.Commands.Models
+namespace ITIGraduationProject.Application.Features.Notifications.Commands.Models
 {
-    public record MarkAllNotificationsAsReadCommand()
+    public record MarkNotificationAsReadCommand(
+      Guid NotificationId)
       : IRequest<Response<bool>>;
 }
