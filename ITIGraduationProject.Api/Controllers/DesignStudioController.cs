@@ -9,6 +9,10 @@ using ITIGraduationProject.Application.Features.Studio.Queries.GetUserDesigns;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using ITIGraduationProject.Application.Features.Studio.Queries.GetAiChatMessages;
+using ITIGraduationProject.Application.Features.Studio.Queries.GetUserAiChatSessions;
+using ITIGraduationProject.Application.Features.Studio.Commands.CreateAIChatSession;
+using ITIGraduationProject.Application.Features.Studio.Commands.CreateAIChatMessage;
 
 namespace ITIGraduationProject.Api.Controllers
 {
@@ -85,12 +89,45 @@ namespace ITIGraduationProject.Api.Controllers
             return Ok(result);
         }
 
-        // 5. Get User Designs
         [HttpGet("user/{userId:guid}")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<DesignResponseDto>))]
         public async Task<IActionResult> GetUserDesigns([FromRoute] Guid userId, CancellationToken cancellationToken)
         {
             var query = new GetUserDesignsQuery(userId);
+            var result = await _mediator.Send(query, cancellationToken);
+            return Ok(result);
+        }    
+
+        [HttpPost("/api/ai-chat/sessions")]
+        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(Guid))]
+        public async Task<IActionResult> CreateAiChatSession([FromBody] CreateAiChatSessionCommand command, CancellationToken cancellationToken)
+        {
+            var id = await _mediator.Send(command, cancellationToken);
+            return CreatedAtAction(nameof(CreateAiChatSession), new { id }, id);
+        }
+
+        [HttpPost("/api/ai-chat/messages")]
+        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(Guid))]
+        public async Task<IActionResult> CreateAiChatMessage([FromBody] CreateAiChatMessageCommand command, CancellationToken cancellationToken)
+        {
+            var id = await _mediator.Send(command, cancellationToken);
+            return CreatedAtAction(nameof(CreateAiChatMessage), new { id }, id);
+        }
+
+        [HttpGet("/api/ai-chat/sessions/{sessionId:guid}/messages")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<AiChatMessageDto>))]
+        public async Task<IActionResult> GetAiChatMessages([FromRoute] Guid sessionId, CancellationToken cancellationToken)
+        {
+            var query = new GetAiChatMessagesQuery(sessionId);
+            var result = await _mediator.Send(query, cancellationToken);
+            return Ok(result);
+        }
+
+        [HttpGet("/api/ai-chat/user/{userId:guid}/sessions")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<ITIGraduationProject.Application.Features.Studio.Queries.GetUserAiChatSessions.AiChatSessionDto>))]
+        public async Task<IActionResult> GetUserAiChatSessions([FromRoute] Guid userId, CancellationToken cancellationToken)
+        {
+            var query = new GetUserAiChatSessionsQuery(userId);
             var result = await _mediator.Send(query, cancellationToken);
             return Ok(result);
         }
