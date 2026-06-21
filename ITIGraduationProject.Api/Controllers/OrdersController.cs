@@ -44,5 +44,17 @@ namespace ITIGraduationProject.Api.Controllers
             return BadRequest(response);
         }
         #endregion
+
+        #region Update Order Status
+        [HttpPut("update-status")]
+        public async Task<IActionResult> UpdateStatus([FromBody] UpdateOrderStatusCommand command)
+        {
+            var result = await _mediator.Send(command);
+            if (!result)
+                return BadRequest("Order not found or update failed.");
+
+            return Ok("Order status updated successfully.");
+        }
+        #endregion
     }
 }

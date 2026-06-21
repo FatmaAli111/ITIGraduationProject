@@ -1,17 +1,14 @@
-﻿using ITIGraduationProject.Application.Interfaces.IServices.Notification;
+﻿using ITIGraduationProject.Application.Bases;
+using ITIGraduationProject.Application.DTOS.Notification;
+using ITIGraduationProject.Application.Interfaces.IServices.Notification;
 using ITIGraduationProject.Application.Interfaces.Persistence;
-using ITIGraduationProject.Application.Repositories;
-using ITIGraduationProject.Domain.Entities.AIAndModeration;
 using ITIGraduationProject.Domain.Enums;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Mapster;
+using Microsoft.EntityFrameworkCore;
 
 namespace ITIGraduationProject.Service.NotificationServices
 {
-    public class NotificationService : INotificationService
+    public class NotificationService :ResponseHandler, INotificationService
     {
         private readonly INotificationSender _notificationSender;
         private readonly IUnitOfWork _unitOfWork;
@@ -23,13 +20,94 @@ namespace ITIGraduationProject.Service.NotificationServices
         }
 
 
-        public async Task SendNotificationAsync(
-            Guid userId,
-            string title,
-            string message,
-            NotificationType type)
+
+        public async Task<Response<List<NotificationDto>>> GetNotificationsAsync(Guid userId)
         {
-            var notification = new Notification
+            var notifications =
+                await _unitOfWork.Notifications
+                .GetByUserAsync(userId);
+
+
+            var result = notifications.Adapt<List<NotificationDto>>();
+
+
+            return Success(result);
+        }
+
+
+        public async Task<Response<List<NotificationDto>>> GetUnreadNotificationsAsync(Guid userId)
+        {
+            var notifications =
+                await _unitOfWork.Notifications
+                .GetUnreadByUserAsync(userId);
+
+
+            var result = notifications.Adapt<List<NotificationDto>>();
+
+
+            return Success(result);
+        }
+
+
+        public async Task<Response<bool>> MarkAsReadAsync(
+            Guid userId,
+            Guid notificationId)
+        {
+            var notification =
+                await _unitOfWork.Notifications
+                .GetByIdAsync(notificationId);
+
+
+            if (notification == null)
+                return NotFound<bool>("Notification not found");
+
+
+            if (notification.UserId != userId)
+                return Unauthorized<bool>();
+
+
+            notification.IsRead = true;
+
+
+            _unitOfWork.Notifications.Update(notification);
+
+
+            await _unitOfWork.SaveChangesAsync();
+
+
+            return Success(true);
+        }
+
+
+        public async Task<Response<bool>> MarkAllAsReadAsync(Guid userId)
+        {
+            var notifications =
+                await _unitOfWork.Notifications
+                .GetTableAsTracking()
+                .Where(x =>
+                    x.UserId == userId &&
+                    !x.IsRead)
+                .ToListAsync();
+
+
+            foreach (var notification in notifications)
+            {
+                notification.IsRead = true;
+            }
+
+
+            await _unitOfWork.SaveChangesAsync();
+
+
+            return Success(true);
+        }
+        public async Task<Response<bool>> SendNotificationAsync(
+           Guid userId,
+           string title,
+           string message,
+           NotificationType type)
+        {
+            var notification = new Domain.Entities.AIAndModeration.Notification
             {
                 UserId = userId,
                 Title = title,
@@ -41,6 +119,7 @@ namespace ITIGraduationProject.Service.NotificationServices
 
             await _unitOfWork.Notifications.AddAsync(notification);
 
+
             await _unitOfWork.SaveChangesAsync();
 
 
@@ -48,6 +127,9 @@ namespace ITIGraduationProject.Service.NotificationServices
                 userId,
                 title,
                 message);
+
+
+            return Success(true);
         }
     }
 }

@@ -32,6 +32,11 @@ namespace ITIGraduationProject.Api.Controllers
         public async Task<IActionResult> Create([FromBody] CreateTemplateCommand cmd)
             => Ok(await _mediator.Send(cmd));
 
+        [HttpPost("generate")]
+        [Authorize]
+        public async Task<IActionResult> Generate([FromBody] GenerateAITemplateCommand cmd)
+            => Ok(await _mediator.Send(cmd));
+
         [HttpPut("{id:guid}")]
         [Authorize]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateTemplateCommand cmd)

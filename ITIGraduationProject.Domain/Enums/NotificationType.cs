@@ -6,5 +6,8 @@ namespace ITIGraduationProject.Domain.Enums
         OrderUpdate = 1,
         NewMessage = 2,
         SystemAlert = 3,
+        TemplateLiked = 4,
+        TemplateCommented = 5,
+        ModerationUpdate = 6,
     }
 }

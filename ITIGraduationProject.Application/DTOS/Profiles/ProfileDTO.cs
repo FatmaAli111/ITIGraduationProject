@@ -24,6 +24,8 @@ namespace ITIGraduationProject.Application.DTOS.Profiles
         public decimal TotalSpent { get; set; }
         public int TemplatesCreatedCount { get; set; }
         public double AvgTemplateRating { get; set; }
+        public int TotalRewardPoints { get; set; }
+        public int CurrentRank { get; set; }
         public int FollowersCount { get; set; }
         public int FollowingCount { get; set; }
     #endregion

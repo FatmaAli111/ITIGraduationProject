@@ -21,6 +21,7 @@ namespace ITIGraduationProject.Application.Interfaces.Persistence
         INotificationRepository Notifications { get; }
         IRefreshTokenRepository RefreshTokens { get; }
         ICategoryRepository Categories { get; }
+        ICommunityInteractionRepository CommunityInteractions { get; }
 
 
         Task<int> SaveChangesAsync();

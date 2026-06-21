@@ -18,11 +18,15 @@ public class DesignConfiguration : IEntityTypeConfiguration<Design>
         builder.Property(d => d.CanvasStateJSON).IsRequired();
         builder.Property(d => d.SnapshotImageURL).HasMaxLength(500);
         builder.Property(d => d.CalculatedPrice).HasColumnType("decimal(18,2)");
-        builder.Property(d => d.SelectedPrintMethod).HasColumnType("int");
-        builder.Property(d => d.SelectedFabric).HasColumnType("int");
+        builder.Property(d => d.SelectedPrintMethod)
+            .HasConversion<int>()
+            .HasColumnType("int");
+        builder.Property(d => d.SelectedFabric)
+            .HasConversion<int>()
+            .HasColumnType("int");
         builder.Property(d => d.SelectedSize).HasColumnType("int");
         builder.Property(d => d.Status).HasColumnType("int");
-        builder.Property(d => d.SelectedColor).HasColumnType("int");
+        builder.Property(d => d.SelectedColor).HasMaxLength(100);
 
 
 

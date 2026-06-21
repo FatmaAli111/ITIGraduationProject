@@ -17,7 +17,9 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
 
         builder.Property(p => p.Name).IsRequired().HasMaxLength(200);
         builder.Property(p => p.BasePrice).HasColumnType("decimal(18,2)");
-        builder.Property(p => p.AvailableColors).HasColumnType("int");
+        builder.Property(p => p.AvailableColors)
+            .HasConversion<int>()
+            .HasColumnType("int");
         builder.Property(p => p.PreviewImageURL).HasMaxLength(500);
         builder.Property(p => p.StockStatus).HasMaxLength(100);
         builder.Property(p => p.AverageRating).HasColumnType("decimal(3,2)");

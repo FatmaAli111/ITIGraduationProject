@@ -128,6 +128,7 @@ namespace ITIGraduationProject.Infrastructure
             services.AddScoped<IGraphicAssetRepository, GraphicAssetRepository>();
             services.AddScoped<INotificationRepository, NotificationRepository>();
             services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+            services.AddScoped<ICommunityInteractionRepository, CommunityInteractionRepository>();
             services.AddScoped<IUnitOfWork, UnitOfWork>();
         }
     }

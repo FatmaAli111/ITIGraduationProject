@@ -16,8 +16,14 @@ public class PrinterProfileConfiguration : IEntityTypeConfiguration<PrinterProfi
         builder.HasQueryFilter(p => !p.IsDeleted);
 
         builder.Property(p => p.IsActive).HasDefaultValue(true);
-        builder.Property(p => p.SupportedFabrics).IsRequired().HasColumnType("int");
-        builder.Property(p => p.SupportedPrintMethods).IsRequired().HasColumnType("int");
+        builder.Property(p => p.SupportedFabrics)
+            .IsRequired()
+            .HasConversion<int>()
+            .HasColumnType("int");
+        builder.Property(p => p.SupportedPrintMethods)
+            .IsRequired()
+            .HasConversion<int>()
+            .HasColumnType("int");
         builder.Property(p => p.UserId).IsRequired();
 
 

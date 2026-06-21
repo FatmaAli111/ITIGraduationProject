@@ -28,6 +28,10 @@ namespace ITIGraduationProject.Infrastructure.Persistence
         _categories ??= new CategoryRepository(_context);
         private ICategoryRepository? _categories;
 
+        public ICommunityInteractionRepository CommunityInteractions =>
+        _communityInteractions ??= new CommunityInteractionRepository(_context);
+        private ICommunityInteractionRepository? _communityInteractions;
+
         public UnitOfWork(
             AppDbContext context,
             IProductRepository products,
