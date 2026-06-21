@@ -15,7 +15,7 @@ namespace ITIGraduationProject.Api
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -69,7 +69,7 @@ namespace ITIGraduationProject.Api
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
-            //IdentitySeeder.SeedAsync(app.Services);
+            await IdentitySeeder.SeedAsync(app.Services);
             app.UseSwagger();
             app.UseSwaggerUI(c =>
             {
