@@ -18,6 +18,8 @@ public class User : BaseAuditableEntity
     public bool IsActive { get; set; }
     public string? ProfileImageUrl { get; set; }
     public int CurrentPointsBalance { get; set; }
+    public int TotalRewardPoints { get; set; } = 0;
+    public int CurrentRank { get; set; } = 0;
     public UserPreferences UserPreferences { get; set; } = null!;
     public PrinterProfile? PrinterProfile { get; set; }
     public Cart Cart { get; set; } = null!;
