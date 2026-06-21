@@ -1,18 +1,24 @@
 ﻿using ITIGraduationProject.Application.CQRS.Commands;
+using ITIGraduationProject.Application.Features.Studio.Commands.CreateAIChatMessage;
+using ITIGraduationProject.Application.Features.Studio.Commands.CreateAIChatSession;
 using ITIGraduationProject.Application.Features.Studio.Commands.CreateDesign;
+using ITIGraduationProject.Application.Features.Studio.Commands.CreateGraphicAsset;
 using ITIGraduationProject.Application.Features.Studio.Commands.DeleteDesign;
+using ITIGraduationProject.Application.Features.Studio.Commands.DeleteGraphicAsset;
 using ITIGraduationProject.Application.Features.Studio.Commands.UpdateDesign;
+using ITIGraduationProject.Application.Features.Studio.Queries.GetAdminGraphicAssets;
+using ITIGraduationProject.Application.Features.Studio.Queries.GetAiChatMessages;
 using ITIGraduationProject.Application.Features.Studio.Queries.GetDesignById;
+using ITIGraduationProject.Application.Features.Studio.Queries.GetGraphicAssetById;
+using ITIGraduationProject.Application.Features.Studio.Queries.GetGraphicAssets;
 using ITIGraduationProject.Application.Features.Studio.Queries.GetProductForCustomization;
 using ITIGraduationProject.Application.Features.Studio.Queries.GetStudioProducts;
+using ITIGraduationProject.Application.Features.Studio.Queries.GetUserAiChatSessions;
 using ITIGraduationProject.Application.Features.Studio.Queries.GetUserDesigns;
+using ITIGraduationProject.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using ITIGraduationProject.Application.Features.Studio.Queries.GetAiChatMessages;
-using ITIGraduationProject.Application.Features.Studio.Queries.GetUserAiChatSessions;
-using ITIGraduationProject.Application.Features.Studio.Commands.CreateAIChatSession;
-using ITIGraduationProject.Application.Features.Studio.Commands.CreateAIChatMessage;
 
 namespace ITIGraduationProject.Api.Controllers
 {
@@ -129,6 +135,54 @@ namespace ITIGraduationProject.Api.Controllers
         {
             var query = new GetUserAiChatSessionsQuery(userId);
             var result = await _mediator.Send(query, cancellationToken);
+            return Ok(result);
+        }
+
+        [HttpPost("graphic-assets")]
+        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(Guid))]
+        public async Task<IActionResult> CreateGraphicAsset([FromBody] CreateGraphicAssetCommand command, CancellationToken cancellationToken)
+        {
+            var id = await _mediator.Send(command, cancellationToken);
+            return CreatedAtAction(nameof(GetSingleGraphicAsset), new { id }, id);
+        }
+
+        [HttpGet("graphic-assets")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<GraphicAssetDto>))]
+        public async Task<IActionResult> GetCurrentUserGraphicAssets([FromQuery] GraphicAssetType? type, [FromQuery] Guid currentUserId, CancellationToken cancellationToken)
+        {
+            var result = await _mediator.Send(new GetGraphicAssetsQuery(type, currentUserId), cancellationToken);
+            return Ok(result);
+        }
+
+        [HttpGet("graphic-assets/admin")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<GraphicAssetDto>))]
+        public async Task<IActionResult> GetAdminGraphicAssets([FromQuery] GraphicAssetType? type, CancellationToken cancellationToken)
+        {
+            var result = await _mediator.Send(new GetAdminGraphicAssetsQuery(type), cancellationToken);
+            return Ok(result);
+        }
+
+        [HttpDelete("graphic-assets/{id:guid}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> DeleteGraphicAsset([FromRoute] Guid id, CancellationToken cancellationToken)
+        {
+            await _mediator.Send(new DeleteGraphicAssetCommand(id), cancellationToken);
+            return NoContent();
+        }
+
+        [HttpGet("graphic-assets/{id:guid}")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(GraphicAssetDto))]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetSingleGraphicAsset([FromRoute] Guid id, CancellationToken cancellationToken)
+        {
+            var result = await _mediator.Send(new GetGraphicAssetByIdQuery(id), cancellationToken);
+
+            if (result == null)
+            {
+                return NotFound(new { Message = $"Graphic asset with ID {id} was not found." });
+            }
+
             return Ok(result);
         }
 

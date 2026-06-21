@@ -184,5 +184,14 @@ namespace ITIGraduationProject.Service.Admin
 
             return Success<string>(null, isActive ? "User activated." : "User deactivated.");
         }
+
+        public async Task<string> GetUserRoleAsync(Guid userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            if (user == null) return string.Empty;
+
+            var roles = await _userManager.GetRolesAsync(user);
+            return roles.FirstOrDefault() ?? string.Empty;
+        }
     }
 }
