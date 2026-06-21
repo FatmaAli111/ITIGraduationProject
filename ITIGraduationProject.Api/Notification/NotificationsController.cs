@@ -1,5 +1,5 @@
-﻿using ITIGraduationProject.Application.Features.Notification.Commands.Models;
-using ITIGraduationProject.Application.Features.Notification.Queries.Models;
+﻿using ITIGraduationProject.Application.Features.Notifications.Commands.Models;
+using ITIGraduationProject.Application.Features.Notifications.Queries.Models;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
