@@ -44,7 +44,6 @@ namespace ITIGraduationProject.Infrastructure.Identity
                 }
             }
         }
-
         private static async Task SeedAdminAsync(
             UserManager<ApplicationUser> userManager,
             AppDbContext context,
@@ -65,18 +64,35 @@ namespace ITIGraduationProject.Infrastructure.Identity
 
             if (applicationUser is null)
             {
+                var newId = Guid.NewGuid();
+
+                var domainUser = new User
+                {
+                    Id = newId,
+                    Name = name,
+                    IsActive = true,
+                    CurrentPointsBalance = 0,
+                    UserPreferences = new UserPreferences(),
+                    Cart = new Cart()
+                };
+
+                context.AppUsers.Add(domainUser);
+                await context.SaveChangesAsync();
+
                 applicationUser = new ApplicationUser
                 {
-                    Id = Guid.NewGuid(),
+                    Id = newId,
                     Email = email,
                     UserName = email,
                     EmailConfirmed = true
                 };
 
                 var result = await userManager.CreateAsync(applicationUser, password);
-
                 if (!result.Succeeded)
                 {
+                    context.AppUsers.Remove(domainUser);
+                    await context.SaveChangesAsync();
+
                     logger.LogError("Failed to create admin user: {Errors}",
                         string.Join(", ", result.Errors.Select(e => e.Description)));
                     return;
