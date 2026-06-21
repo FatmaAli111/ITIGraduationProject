@@ -1,13 +1,14 @@
 ﻿using ITIGraduationProject.Application.Features.Notifications.Commands.Models;
 using ITIGraduationProject.Application.Features.Notifications.Queries.Models;
 using MediatR;
-using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ITIGraduationProject.Api.Notification
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class NotificationsController : ControllerBase
     {
         private readonly IMediator _mediator;
