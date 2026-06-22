@@ -6,7 +6,7 @@ namespace ITIGraduationProject.Application.Features.Orders.Commands.Models
 {
     public class CreateOrderCommand : IRequest<Response<string>>
     {
-        public string UserId { get; set; } = string.Empty;
+        public Guid UserId { get; set; } 
         public string ReceiverName { get; set; } = string.Empty;
         public string PhoneNumber { get; set; } = string.Empty;
         public string Address { get; set; } = string.Empty;

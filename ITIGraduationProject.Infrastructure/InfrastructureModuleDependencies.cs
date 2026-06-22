@@ -131,6 +131,7 @@ namespace ITIGraduationProject.Infrastructure
             services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
             services.AddScoped<ICommunityInteractionRepository, CommunityInteractionRepository>();
             services.AddScoped<IUnitOfWork, UnitOfWork>();
+            services.AddScoped<IPaymentService, StripePaymentService>();
         }
     }
 }
