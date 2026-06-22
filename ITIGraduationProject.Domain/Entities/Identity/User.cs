@@ -32,4 +32,5 @@ public class User : BaseAuditableEntity
     public ICollection<CommunityInteraction> CommunityInteractions { get; set; } = new HashSet<CommunityInteraction>();
     public ICollection<Reward> Rewards { get; set; } = new HashSet<Reward>();
     public ICollection<ModerationReport> ModerationReports { get; set; } = new HashSet<ModerationReport>();
+    public ICollection<GraphicAsset> GraphicAssets { get; set; } = new HashSet<GraphicAsset>();
 }

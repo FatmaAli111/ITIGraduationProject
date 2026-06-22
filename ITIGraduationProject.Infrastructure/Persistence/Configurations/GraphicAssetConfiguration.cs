@@ -19,7 +19,7 @@ public class GraphicAssetConfiguration : IEntityTypeConfiguration<GraphicAsset>
         builder.Property(g => g.ImageUrl).IsRequired().HasMaxLength(500);
         builder.Property(g => g.Tags).HasMaxLength(500);
         builder.Property(g => g.Type).IsRequired();
-        builder.Property(g => g.UploadedByAdminId).IsRequired();
+        builder.Property(g => g.UserId).IsRequired();
 
     }
 }

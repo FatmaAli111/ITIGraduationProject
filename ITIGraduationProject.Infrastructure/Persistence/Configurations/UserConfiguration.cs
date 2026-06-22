@@ -90,5 +90,10 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .WithOne()
             .HasForeignKey<ApplicationUser>(au => au.Id)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasMany(u => u.GraphicAssets)
+            .WithOne(g => g.User)
+            .HasForeignKey(g => g.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
