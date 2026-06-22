@@ -1,8 +1,11 @@
-﻿using ITIGraduationProject.Application.Interfaces.IServices.AdminIServices;
+﻿using ITIGraduationProject.Application.Interfaces; 
+using ITIGraduationProject.Application.Interfaces.IAiService;
+using ITIGraduationProject.Application.Interfaces.IServices.AdminIServices;
 using ITIGraduationProject.Application.Interfaces.IServices.IdentityServices;
 using ITIGraduationProject.Application.Interfaces.IServices.Notification;
-using ITIGraduationProject.Service.Admin;
 using ITIGraduationProject.Application.Interfaces.IServices.StudioServices;
+using ITIGraduationProject.Service.Admin;
+using ITIGraduationProject.Service.AI; 
 using ITIGraduationProject.Service.Identity.Authantication;
 using ITIGraduationProject.Service.Identity.Email;
 using ITIGraduationProject.Service.Identity.JWT;
@@ -15,17 +18,17 @@ namespace ITIGraduationProject.Service
 {
     public static class ServiceModuleDependencies
     {
-        public static void AddServiceModuleDependencies(this IServiceCollection services,IConfiguration configuration)
+        public static void AddServiceModuleDependencies(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddScoped<IIdentityService, IdentityService>();
             services.AddScoped<IEmailService, EmailService>();
             services.Configure<EmailSettings>(configuration.GetSection("EmailSettings"));
             services.Configure<JwtSettings>(configuration.GetSection("JwtSettings"));
             services.AddScoped<IJwtService, JwtService>();
-            services.AddScoped<INotificationService,NotificationService>();
+            services.AddScoped<INotificationService, NotificationService>();
             services.AddScoped<IAdminUserService, AdminUserService>();
             services.AddScoped<IPriceCalculation, PriceCalculationService>();
-
+            services.AddHttpClient<IAiService, AiService>();
         }
     }
 }
