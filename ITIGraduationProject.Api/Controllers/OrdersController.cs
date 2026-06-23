@@ -3,6 +3,8 @@ using ITIGraduationProject.Application.Features.Orders.Queries.Models;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Threading.Tasks;
 
 namespace ITIGraduationProject.Api.Controllers
 {
@@ -54,6 +56,20 @@ namespace ITIGraduationProject.Api.Controllers
                 return BadRequest("Order not found or update failed.");
 
             return Ok("Order status updated successfully.");
+        }
+        #endregion
+
+        #region Cancel Order Endpoint
+        [HttpPut("{id}/cancel")]
+        public async Task<IActionResult> CancelOrder(Guid id)
+        {
+            var response = await _mediator.Send(new CancelOrderCommand(id));
+
+            if (response.StatusCode == System.Net.HttpStatusCode.OK)
+            {
+                return Ok(response); 
+            }
+            return BadRequest(response); 
         }
         #endregion
     }

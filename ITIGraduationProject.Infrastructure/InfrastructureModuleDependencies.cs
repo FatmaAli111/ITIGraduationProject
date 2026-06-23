@@ -8,6 +8,7 @@ using ITIGraduationProject.Domain.Entities;
 using ITIGraduationProject.Infrastructure.Identity;
 using ITIGraduationProject.Infrastructure.Persistence;
 using ITIGraduationProject.Infrastructure.Persistence.Repositories;
+using ITIGraduationProject.Infrastructure.Services;
 using ITIGraduationProject.Infrastructure.SignalR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -131,6 +132,7 @@ namespace ITIGraduationProject.Infrastructure
             services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
             services.AddScoped<ICommunityInteractionRepository, CommunityInteractionRepository>();
             services.AddScoped<IUnitOfWork, UnitOfWork>();
+            services.AddScoped<IPaymentService, StripePaymentService>();
         }
     }
 }

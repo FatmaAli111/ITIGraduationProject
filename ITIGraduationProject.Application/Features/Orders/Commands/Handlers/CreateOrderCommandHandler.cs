@@ -1,10 +1,15 @@
 ﻿using MediatR;
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using ITIGraduationProject.Application.Features.Orders.Commands.Models;
 using ITIGraduationProject.Application.Bases;
 using ITIGraduationProject.Application.Interfaces.Persistence;
+using ITIGraduationProject.Application.Interfaces.IServices.Notification; 
 using ITIGraduationProject.Domain.Entities.ECommerce;
 using ITIGraduationProject.Domain.Enums;
-using Microsoft.EntityFrameworkCore;
 
 namespace ITIGraduationProject.Application.Features.Orders.Commands.Handlers
 {
@@ -12,21 +17,29 @@ namespace ITIGraduationProject.Application.Features.Orders.Commands.Handlers
     {
         #region Dependency Injection
         private readonly IUnitOfWork _unitOfWork;
-        public CreateOrderCommandHandler(IUnitOfWork unitOfWork)
+        private readonly IPaymentService _paymentService;
+        private readonly INotificationService _notificationService;
+
+        public CreateOrderCommandHandler(
+            IUnitOfWork unitOfWork,
+            IPaymentService paymentService,
+            INotificationService notificationService)
         {
             _unitOfWork = unitOfWork;
+            _paymentService = paymentService;
+            _notificationService = notificationService;
         }
         #endregion
 
         #region Handle Method
-        public async Task<Response<string>> Handle(CreateOrderCommand request, CancellationToken cancellationToken) {
-
+        public async Task<Response<string>> Handle(CreateOrderCommand request, CancellationToken cancellationToken)
+        {
             decimal subTotal = 0;
             var orderItemsList = new List<OrderItem>();
 
             #region Calculate Order Items and Check If Design Exists
-            foreach (var item in request.OrderItems) { 
-
+            foreach (var item in request.OrderItems)
+            {
                 var design = await _unitOfWork.Designs.GetByIdAsync(item.DesignId);
                 if (design == null)
                 {
@@ -44,9 +57,9 @@ namespace ITIGraduationProject.Application.Features.Orders.Commands.Handlers
                     Quantity = item.Quantity,
                     UnitPrice = price,
                     PrinterProfileId = item.PrinterProfileId,
-                    Status = OrderItemStatus.Pending, 
-                    SnapshotImageURL = design.SnapshotImageURL, 
-                    PriceBreakdown = $"Size: {design.SelectedSize}, Fabric: {design.SelectedFabric}, Color: {design.SelectedColor}" 
+                    Status = OrderItemStatus.Pending,
+                    SnapshotImageURL = design.SnapshotImageURL,
+                    PriceBreakdown = $"Size: {design.SelectedSize}, Fabric: {design.SelectedFabric}, Color: {design.SelectedColor}"
                 });
             }
             #endregion
@@ -55,12 +68,12 @@ namespace ITIGraduationProject.Application.Features.Orders.Commands.Handlers
             decimal discountAmount = 0;
             Guid? couponId = null;
 
-            if (!string.IsNullOrEmpty(request.CouponCode)) { 
-
+            if (!string.IsNullOrEmpty(request.CouponCode))
+            {
                 var coupon = await _unitOfWork.Coupons.GetTableNoTracking()
-                    .FirstOrDefaultAsync(coupon => coupon.Code == request.CouponCode && coupon.IsActive , cancellationToken);
+                    .FirstOrDefaultAsync(coupon => coupon.Code == request.CouponCode && coupon.IsActive, cancellationToken);
 
-                if (coupon != null && coupon.ExpiryDate > DateTime.UtcNow && coupon.UsedCount < coupon.UsageLimit 
+                if (coupon != null && coupon.ExpiryDate > DateTime.UtcNow && coupon.UsedCount < coupon.UsageLimit
                     && subTotal >= coupon.MinOrderAmount)
                 {
                     couponId = coupon.Id;
@@ -81,7 +94,7 @@ namespace ITIGraduationProject.Application.Features.Orders.Commands.Handlers
             #endregion
 
             #region Calculate Tax & Total 
-            decimal tax = subTotal * 0.08m; 
+            decimal tax = subTotal * 0.08m;
             decimal totalAmount = (subTotal + tax) - discountAmount;
             #endregion
 
@@ -91,7 +104,7 @@ namespace ITIGraduationProject.Application.Features.Orders.Commands.Handlers
             #region the final order will send to Database
             var order = new Order
             {
-                UserId = Guid.Parse(request.UserId),
+                UserId = request.UserId,
                 OrderNumber = orderNumber,
                 ReceiverName = request.ReceiverName,
                 PhoneNumber = request.PhoneNumber,
@@ -115,7 +128,15 @@ namespace ITIGraduationProject.Application.Features.Orders.Commands.Handlers
 
             if (result > 0)
             {
-                return Success(orderNumber, "Order created successfully.");
+                var paymentUrl = await _paymentService.CreatePaymentSessionAsync(order);
+                await _notificationService.SendNotificationAsync(
+                    order.UserId,
+                    "Order Created Successfully! 🛍️",
+                    $"Your order {orderNumber} has been placed. Please complete your payment via the secure link to confirm.",
+                    NotificationType.OrderUpdate 
+                );
+
+                return Success(paymentUrl, "Order created successfully. Redirecting to payment...");
             }
             else
             {
@@ -123,6 +144,5 @@ namespace ITIGraduationProject.Application.Features.Orders.Commands.Handlers
             }
         }
         #endregion
-
     }
 }
