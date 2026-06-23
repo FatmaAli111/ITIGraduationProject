@@ -1,3 +1,4 @@
+using ITIGraduationProject.Application.Interfaces.IRepositories;
 using ITIGraduationProject.Application.Interfaces.Persistence;
 using ITIGraduationProject.Application.Interfaces.Repositories;
 using ITIGraduationProject.Application.Repositories;
@@ -23,7 +24,7 @@ namespace ITIGraduationProject.Infrastructure.Persistence
         public IGraphicAssetRepository GraphicAssets { get; }
         public INotificationRepository Notifications { get; }
         public IRefreshTokenRepository RefreshTokens { get; }
-
+        public IProductImageRepository ProductImages { get; }
         public ICategoryRepository Categories =>
         _categories ??= new CategoryRepository(_context);
         private ICategoryRepository? _categories;
@@ -46,7 +47,8 @@ namespace ITIGraduationProject.Infrastructure.Persistence
             IRewardRepository rewards,
             IGraphicAssetRepository graphicAssets,
             INotificationRepository notifications,
-            IRefreshTokenRepository refreshTokens)
+            IRefreshTokenRepository refreshTokens,
+            IProductImageRepository productImages)
         {
             _context = context;
 
@@ -63,6 +65,7 @@ namespace ITIGraduationProject.Infrastructure.Persistence
             GraphicAssets = graphicAssets;
             Notifications = notifications;
             RefreshTokens = refreshTokens;
+            ProductImages = productImages;
         }
 
         public async Task<int> SaveChangesAsync()

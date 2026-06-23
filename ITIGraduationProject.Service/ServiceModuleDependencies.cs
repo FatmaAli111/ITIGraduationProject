@@ -1,11 +1,13 @@
 ﻿using ITIGraduationProject.Application.Interfaces; 
 using ITIGraduationProject.Application.Interfaces.IAiService;
 using ITIGraduationProject.Application.Interfaces.IServices.AdminIServices;
+using ITIGraduationProject.Application.Interfaces.IServices.FilesServices;
 using ITIGraduationProject.Application.Interfaces.IServices.IdentityServices;
 using ITIGraduationProject.Application.Interfaces.IServices.Notification;
 using ITIGraduationProject.Application.Interfaces.IServices.StudioServices;
 using ITIGraduationProject.Service.Admin;
-using ITIGraduationProject.Service.AI; 
+using ITIGraduationProject.Service.AI;
+using ITIGraduationProject.Service.FileService;
 using ITIGraduationProject.Service.Identity.Authantication;
 using ITIGraduationProject.Service.Identity.Email;
 using ITIGraduationProject.Service.Identity.JWT;
@@ -28,6 +30,7 @@ namespace ITIGraduationProject.Service
             services.AddScoped<INotificationService, NotificationService>();
             services.AddScoped<IAdminUserService, AdminUserService>();
             services.AddScoped<IPriceCalculation, PriceCalculationService>();
+            services.AddScoped<IFileService, LocalFileService>();
             services.AddHttpClient<IAiService, AiService>();
         }
     }
