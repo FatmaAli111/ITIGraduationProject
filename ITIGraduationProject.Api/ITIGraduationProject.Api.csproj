@@ -25,5 +25,9 @@
     <ProjectReference Include="..\ITIGraduationProject.Service\ITIGraduationProject.Service.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Swagger\" />
+  </ItemGroup>
+
 </Project>
 
