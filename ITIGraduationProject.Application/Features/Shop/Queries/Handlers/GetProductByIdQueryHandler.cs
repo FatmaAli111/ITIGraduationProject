@@ -19,6 +19,7 @@ namespace ITIGraduationProject.Application.Features.Shop.Queries.Handlers
         IRequestHandler<GetProductByIdQuery, Response<ProductDto>>
     {
         private readonly IUnitOfWork _uow;
+
         public GetProductByIdQueryHandler(IUnitOfWork uow)
         {
             _uow = uow;
@@ -28,12 +29,14 @@ namespace ITIGraduationProject.Application.Features.Shop.Queries.Handlers
         {
             var product = await _uow.Products.GetTableNoTracking()
                 .Include(p => p.Category)
+                .Include(p => p.ProductImages)
                 .FirstOrDefaultAsync(p => p.Id == request.Id && !p.IsDeleted);
 
             if (product == null)
                 return NotFound<ProductDto>("Product not found");
 
-            return Success(product.Adapt<ProductDto>());
+            var dto = product.Adapt<ProductDto>();
+            return Success(dto);
         }
     }
 }

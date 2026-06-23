@@ -26,7 +26,17 @@ namespace ITIGraduationProject.Api
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
-            //add dbcontext
+
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowFrontend", policy =>
+                {
+                    policy
+                        .AllowAnyOrigin()
+                        .AllowAnyMethod()
+                        .AllowAnyHeader();
+                });
+            });
 
             // adding swagger services to run Http
             builder.Services.AddEndpointsApiExplorer();
@@ -83,11 +93,11 @@ namespace ITIGraduationProject.Api
             app.UseMiddleware<ErrorHandlerMiddleware>();
 
             app.UseHttpsRedirection();
-            //app.UseCors(CORS);
-
-            app.UseAuthentication();  
-            app.UseAuthorization();
             app.UseStaticFiles(); // serves wwwroot/ contents
+            app.UseCors("AllowFrontend");
+
+            app.UseAuthentication();
+            app.UseAuthorization();
 
             app.MapControllers();
             app.MapHub<NotificationHub>("/hubs/notifications");

@@ -1,4 +1,5 @@
-﻿using ITIGraduationProject.Application.Features.Studio.Queries.GetProductForCustomization;
+﻿using ITIGraduationProject.Application.DTOS.ShopDTOs;
+using ITIGraduationProject.Application.Features.Studio.Queries.GetProductForCustomization;
 using ITIGraduationProject.Application.Features.Studio.Queries.GetStudioProducts;
 using ITIGraduationProject.Application.Features.Studio.Queries.GetUserAiChatSessions;
 using ITIGraduationProject.Domain.Entities.Products;
@@ -34,6 +35,20 @@ namespace ITIGraduationProject.Application.Common.Mappings
                 ? JsonSerializer.Deserialize<PrintableZoneDetailDto>(src.PrintableZoneJson, jsonOptions)
                 : null);
 
+            config.NewConfig<Product, ProductDto>()
+                .Map(dest => dest.Id, src => src.Id)
+                .Map(dest => dest.Name, src => src.Name)
+                .Map(dest => dest.BasePrice, src => src.BasePrice)
+                .Map(dest => dest.CategoryName, src => src.Category.Name)
+                .Map(dest => dest.PreviewImageUrl, src => !string.IsNullOrEmpty(src.PreviewImageURL)
+                    ? src.PreviewImageURL
+                    : src.ProductImages
+                        .OrderByDescending(img => img.IsPrimary)
+                        .ThenBy(img => img.DisplayOrder)
+                        .Select(img => img.ImageUrl)
+                        .FirstOrDefault() ?? string.Empty)
+                .Map(dest => dest.IsAvailable, src => src.IsAvailable)
+                .Map(dest => dest.AverageRating, src => src.AverageRating);
 
             config.NewConfig<Product, StudioProductListItemDto>()
             .Map(dest => dest.Id, src => src.Id)
