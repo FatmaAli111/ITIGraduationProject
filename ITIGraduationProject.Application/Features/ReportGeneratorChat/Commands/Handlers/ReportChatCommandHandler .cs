@@ -28,8 +28,7 @@ namespace ITIGraduationProject.Application.Features.ReportGeneratorChat.Commands
                 CreateReportChatSessionCommand request,
                 CancellationToken cancellationToken)
             {
-                return await _service.CreateSessionAsync(
-                    request.UserId);
+                return await _service.CreateSessionAsync();
             }
 
             public async Task<Response<ReportChatResponseDto>> Handle(

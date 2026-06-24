@@ -11,14 +11,14 @@ namespace ITIGraduationProject.Application.Interfaces.IServices.IReportServices
    
         public interface IReportChatService
         {
-            Task<Response<Guid>> CreateSessionAsync(Guid userId);
-
+        Task<Response<Guid>> CreateSessionAsync();
             Task<Response<ReportChatResponseDto>> SendMessageAsync(
                 Guid sessionId,
                 string message);
 
             Task<Response<List<ReportChatMessageDto>>> GetHistoryAsync(
                 Guid sessionId);
+
         }
     
 }

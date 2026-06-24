@@ -8,7 +8,5 @@ using System.Threading.Tasks;
 
 namespace ITIGraduationProject.Application.Features.ReportGeneratorChat.Commands.Models
 {
-    public record CreateReportChatSessionCommand(
-       Guid UserId
-   ) : IRequest<Response<Guid>>;
+    public record CreateReportChatSessionCommand: IRequest<Response<Guid>>;
 }

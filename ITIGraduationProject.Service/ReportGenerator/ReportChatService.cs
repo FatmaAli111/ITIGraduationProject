@@ -5,6 +5,7 @@ using ITIGraduationProject.Application.Interfaces.IServices.IReportServices;
 using ITIGraduationProject.Application.Interfaces.Persistence;
 using ITIGraduationProject.Domain.Entities.AIAndModeration;
 using ITIGraduationProject.Domain.Enums;
+using ITIGraduationProject.Application.Interfaces;
 
 namespace ITIGraduationProject.Service.ReportGenerator
 {
@@ -12,17 +13,21 @@ namespace ITIGraduationProject.Service.ReportGenerator
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly ILangflowService _langflowService;
+        private readonly ICurrentUserService _currentUser;
 
-    public ReportChatService(
+        public ReportChatService(
         IUnitOfWork unitOfWork,
-        ILangflowService langflowService)
+        ILangflowService langflowService, ICurrentUserService currentUser)
         {
             _unitOfWork = unitOfWork;
             _langflowService = langflowService;
+            _currentUser = currentUser;
         }
 
-        public async Task<Response<Guid>> CreateSessionAsync(Guid userId)
+        public async Task<Response<Guid>> CreateSessionAsync()
         {
+            var userId = _currentUser.UserId;
+
             var session = new AiChatSession
             {
                 Id = Guid.NewGuid(),
@@ -37,15 +42,12 @@ namespace ITIGraduationProject.Service.ReportGenerator
         }
 
         public async Task<Response<ReportChatResponseDto>> SendMessageAsync(
-            Guid sessionId,
-            string message)
+     Guid sessionId,
+     string message)
         {
             var session =
-     await _unitOfWork.AiChatSessions
-         .GetWithMessagesTrackingAsync(sessionId);
-
-            if (session == null)
-                return NotFound<ReportChatResponseDto>("Session not found");
+                await _unitOfWork.AiChatSessions
+                    .GetByIdAsync(sessionId);
 
             if (session == null)
                 return NotFound<ReportChatResponseDto>(
@@ -60,9 +62,13 @@ namespace ITIGraduationProject.Service.ReportGenerator
                 SentAt = DateTime.UtcNow
             };
 
-            session.AiChatMessages.Add(userMessage);
+            await _unitOfWork.AiChatMessages.AddAsync(userMessage);
 
-            var aiText = "test response";
+            var aiText =
+                await _langflowService.SendMessageAsync(
+                    message,
+                    sessionId.ToString());
+
             var aiMessage = new AiChatMessage
             {
                 Id = Guid.NewGuid(),
@@ -72,9 +78,7 @@ namespace ITIGraduationProject.Service.ReportGenerator
                 SentAt = DateTime.UtcNow
             };
 
-            session.AiChatMessages.Add(aiMessage);
-
-            _unitOfWork.AiChatSessions.Update(session);
+            await _unitOfWork.AiChatMessages.AddAsync(aiMessage);
 
             await _unitOfWork.SaveChangesAsync();
 
@@ -87,7 +91,6 @@ namespace ITIGraduationProject.Service.ReportGenerator
                 ResponseTime = aiMessage.SentAt
             });
         }
-
         public async Task<Response<List<ReportChatMessageDto>>> GetHistoryAsync(
             Guid sessionId)
         {

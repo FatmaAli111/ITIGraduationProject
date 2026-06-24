@@ -35,8 +35,13 @@ namespace ITIGraduationProject.Infrastructure
         public static void AddInfrastructureModuleDependencies(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddDbContext<AppDbContext>(options =>
-           options.UseSqlServer(configuration.GetConnectionString("DefaultConnectionString"))
-           );
+          {
+              options.UseSqlServer(configuration.GetConnectionString("DefaultConnectionString"));
+          options.EnableSensitiveDataLogging();
+              options.EnableDetailedErrors();
+
+              options.LogTo(Console.WriteLine);
+          } );
             
             services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options=>
           {
@@ -136,6 +141,7 @@ namespace ITIGraduationProject.Infrastructure
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped<IPaymentService, StripePaymentService>();
             services.AddScoped<IProductImageRepository, ProductImageRepository>();
+            services.AddScoped<IAiChatMessageRepository, AiChatMessageRepository>();
         }
     }
 }

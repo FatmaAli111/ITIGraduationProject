@@ -1,6 +1,8 @@
 ﻿using ITIGraduationProject.Application.Features.ReportGeneratorChat.Commands.Models;
 using ITIGraduationProject.Application.Features.ReportGeneratorChat.Queries.Models;
+using ITIGraduationProject.Domain.Constants;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,6 +10,7 @@ namespace ITIGraduationProject.Api.Admin
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class ReportChatController : ControllerBase
     {
         private readonly IMediator _mediator;
@@ -17,11 +20,13 @@ namespace ITIGraduationProject.Api.Admin
             _mediator = mediator;
         }
 
-        [HttpPost("sessions")]
-        public async Task<IActionResult> CreateSession(
-            [FromBody] CreateReportChatSessionCommand command)
+        [HttpPost("session")]
+        public async Task<IActionResult> CreateSession()
         {
-            return Ok(await _mediator.Send(command));
+            var result = await _mediator.Send(
+                new CreateReportChatSessionCommand());
+
+            return Ok(result);
         }
 
         [HttpPost("messages")]

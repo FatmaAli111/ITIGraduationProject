@@ -91,6 +91,8 @@ public class DesignPersistenceHandlerTests
         public IProductImageRepository ProductImages => throw new NotImplementedException();
         public IPrinterProfileRepository PrinterProfiles => throw new NotImplementedException();
 
+        public IAiChatMessageRepository AiChatMessages => throw new NotImplementedException();
+
         public Task<int> SaveChangesAsync() => Task.FromResult(0);
     }
 
