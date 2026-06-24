@@ -797,7 +797,7 @@ namespace ITIGraduationProject.Infrastructure.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
 
-                    b.Property<Guid>("PrinterProfileId")
+                    b.Property<Guid?>("PrinterProfileId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("Quantity")
@@ -1758,8 +1758,7 @@ namespace ITIGraduationProject.Infrastructure.Migrations
                     b.HasOne("ITIGraduationProject.Domain.Entities.Identity.PrinterProfile", "PrinterProfile")
                         .WithMany("OrderItems")
                         .HasForeignKey("PrinterProfileId")
-                        .OnDelete(DeleteBehavior.SetNull)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Design");
 

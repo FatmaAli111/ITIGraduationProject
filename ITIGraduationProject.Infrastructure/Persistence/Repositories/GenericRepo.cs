@@ -11,7 +11,7 @@ using ITIGraduationProject.Application.Repositories;
 
 namespace ITIGraduationProject.Infrastructure.Persistence.Repositories
 {
-    public class GenericRepo<T>:IGenericRepo<T> where T :class
+    public class    GenericRepo<T>:IGenericRepo<T> where T :class
     {
         protected readonly AppDbContext _context;
         protected readonly DbSet<T> _dbSet;

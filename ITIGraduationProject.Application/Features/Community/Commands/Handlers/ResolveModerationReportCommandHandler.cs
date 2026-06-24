@@ -1,10 +1,11 @@
 using ITIGraduationProject.Application.Bases;
-using ITIGraduationProject.Application.Features.Community;
 using ITIGraduationProject.Application.Features.Community.Commands.Models;
+using ITIGraduationProject.Application.Features.Notifications;
 using ITIGraduationProject.Application.Interfaces.IServices.Notification;
 using ITIGraduationProject.Application.Interfaces.Persistence;
 using ITIGraduationProject.Domain.Enums;
 using MediatR;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,11 +18,13 @@ namespace ITIGraduationProject.Application.Features.Community.Commands.Handlers
     {
         private readonly IUnitOfWork _uow;
         private readonly INotificationService _notificationService;
+        private readonly ILogger<ResolveModerationReportCommandHandler> _logger;
 
         public ResolveModerationReportCommandHandler(
             IUnitOfWork uow,
-            INotificationService notificationService)
-            => (_uow, _notificationService) = (uow, notificationService);
+            INotificationService notificationService,
+            ILogger<ResolveModerationReportCommandHandler> logger)
+            => (_uow, _notificationService, _logger) = (uow, notificationService, logger);
 
         public async Task<Response<string>> Handle(
             ResolveModerationReportCommand cmd, CancellationToken ct)
@@ -40,8 +43,9 @@ namespace ITIGraduationProject.Application.Features.Community.Commands.Handlers
             var template = await _uow.Templates.GetByIdAsync(report.TargetTemplateId);
             if (template is not null && !template.IsDeleted)
             {
-                await CommunityNotificationHelper.TrySendAsync(
+                await NotificationDispatchHelper.TrySendAsync(
                     _notificationService,
+                    _logger,
                     template.CreatorUserId,
                     "Moderation update",
                     $"Action taken on your template \"{template.Name}\": {cmd.ActionTaken}.",

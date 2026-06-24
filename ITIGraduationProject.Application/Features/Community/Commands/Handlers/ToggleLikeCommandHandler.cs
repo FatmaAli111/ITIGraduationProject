@@ -1,7 +1,7 @@
 using ITIGraduationProject.Application.Bases;
 using ITIGraduationProject.Application.DTOS.CommunityDTOs;
-using ITIGraduationProject.Application.Features.Community;
 using ITIGraduationProject.Application.Features.Community.Commands.Models;
+using ITIGraduationProject.Application.Features.Notifications;
 using ITIGraduationProject.Application.Interfaces;
 using ITIGraduationProject.Application.Interfaces.IServices.Notification;
 using ITIGraduationProject.Application.Interfaces.Persistence;
@@ -9,6 +9,7 @@ using ITIGraduationProject.Domain.Entities.AIAndModeration;
 using ITIGraduationProject.Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -22,12 +23,15 @@ namespace ITIGraduationProject.Application.Features.Community.Commands.Handlers
         private readonly IUnitOfWork _uow;
         private readonly ICurrentUserService _currentUser;
         private readonly INotificationService _notificationService;
+        private readonly ILogger<ToggleLikeCommandHandler> _logger;
 
         public ToggleLikeCommandHandler(
             IUnitOfWork uow,
             ICurrentUserService currentUser,
-            INotificationService notificationService)
-            => (_uow, _currentUser, _notificationService) = (uow, currentUser, notificationService);
+            INotificationService notificationService,
+            ILogger<ToggleLikeCommandHandler> logger)
+            => (_uow, _currentUser, _notificationService, _logger) =
+                (uow, currentUser, notificationService, logger);
 
         public async Task<Response<LikeStatusDto>> Handle(
             ToggleLikeCommand cmd, CancellationToken ct)
@@ -72,8 +76,9 @@ namespace ITIGraduationProject.Application.Features.Community.Commands.Handlers
             {
                 var actor = await _uow.Users.GetByIdAsync(_currentUser.UserId);
                 var actorName = actor?.Name ?? "Someone";
-                await CommunityNotificationHelper.TrySendAsync(
+                await NotificationDispatchHelper.TrySendAsync(
                     _notificationService,
+                    _logger,
                     template.CreatorUserId,
                     "New like",
                     $"{actorName} liked your template \"{template.Name}\".",

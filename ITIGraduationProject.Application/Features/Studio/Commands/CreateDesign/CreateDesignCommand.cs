@@ -14,5 +14,6 @@ public record CreateDesignCommand(
     ProductSize? SelectedSize,
     FabricType? SelectedFabric,
     PrintMethodType? SelectedPrintMethod,
-    string? SelectedColor
+    string? SelectedColor,
+    List<DesignAssetInput>? Assets
 ) : IRequest<Guid>;

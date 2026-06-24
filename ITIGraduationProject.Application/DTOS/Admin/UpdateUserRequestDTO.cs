@@ -8,6 +8,6 @@ namespace ITIGraduationProject.Application.DTOS.Admin
 {
     public class UpdateUserRequestDTO
     {
-        public string Name { get; set; }
+        public string Name { get; set; } 
     }
 }

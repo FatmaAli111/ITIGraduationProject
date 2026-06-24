@@ -16,6 +16,7 @@ namespace ITIGraduationProject.Api.Controllers
         public ModerationController(IMediator mediator) => _mediator = mediator;
 
         [HttpGet("reports")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetReports([FromQuery] GetModerationReportsQuery query)
             => Ok(await _mediator.Send(query));
 

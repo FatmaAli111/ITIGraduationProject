@@ -29,5 +29,11 @@ namespace ITIGraduationProject.Infrastructure.Persistence.Repositories
                 .Where(s => s.UserId == userId)
                 .ToListAsync();
         }
+        public async Task<AiChatSession?> GetWithMessagesTrackingAsync(Guid id)
+        {
+            return await _context.AiChatSessions
+                .Include(s => s.AiChatMessages)
+                .FirstOrDefaultAsync(s => s.Id == id);
+        }
     }
 }

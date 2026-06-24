@@ -22,12 +22,32 @@ namespace ITIGraduationProject.Application.Features.Studio.Queries.GetDesignById
 
         public async Task<DesignResponseDto> Handle(GetDesignByIdQuery request, CancellationToken cancellationToken)
         {
-            var designDto = await _unitOfWork.Designs
+            var design = await _unitOfWork.Designs
                 .GetTableNoTracking()
-                .Include(d => d.Product) 
-                .Where(d => d.Id == request.Id)
-                .ProjectToType<DesignResponseDto>()
-                .FirstOrDefaultAsync(cancellationToken);
+                .Include(d => d.Product)
+                .Include(d => d.GraphicAssets)
+                .FirstOrDefaultAsync(d => d.Id == request.Id, cancellationToken);
+
+            if (design == null)
+            {
+                throw new KeyNotFoundException($"Entity \"{nameof(Design)}\" ({request.Id}) was not found.");
+            }
+
+            var designDto = new DesignResponseDto(
+                design.Id,
+                design.UserId,
+                design.ProductId,
+                design.Product?.Name ?? string.Empty,
+                design.TemplateId,
+                design.CanvasStateJSON,
+                design.SnapshotImageURL,
+                design.Status.ToString(),
+                design.SelectedSize?.ToString(),
+                design.SelectedFabric?.ToString(),
+                design.SelectedPrintMethod?.ToString(),
+                design.SelectedColor,
+                design.CalculatedPrice
+            );
 
             if (designDto == null)
             {

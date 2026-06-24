@@ -1,3 +1,4 @@
+using ITIGraduationProject.Application.Interfaces.IRepositories;
 using ITIGraduationProject.Application.Interfaces.Persistence;
 using ITIGraduationProject.Application.Interfaces.Repositories;
 using ITIGraduationProject.Application.Repositories;
@@ -23,7 +24,7 @@ namespace ITIGraduationProject.Infrastructure.Persistence
         public IGraphicAssetRepository GraphicAssets { get; }
         public INotificationRepository Notifications { get; }
         public IRefreshTokenRepository RefreshTokens { get; }
-
+        public IProductImageRepository ProductImages { get; }
         public ICategoryRepository Categories =>
         _categories ??= new CategoryRepository(_context);
         private ICategoryRepository? _categories;
@@ -31,6 +32,12 @@ namespace ITIGraduationProject.Infrastructure.Persistence
         public ICommunityInteractionRepository CommunityInteractions =>
         _communityInteractions ??= new CommunityInteractionRepository(_context);
         private ICommunityInteractionRepository? _communityInteractions;
+
+        public IPrinterProfileRepository PrinterProfiles =>
+        _printerProfiles ??= new PrinterProfileRepository(_context);
+
+        public IAiChatMessageRepository AiChatMessages { get; }
+        private IPrinterProfileRepository? _printerProfiles;
 
         public UnitOfWork(
             AppDbContext context,
@@ -46,7 +53,9 @@ namespace ITIGraduationProject.Infrastructure.Persistence
             IRewardRepository rewards,
             IGraphicAssetRepository graphicAssets,
             INotificationRepository notifications,
-            IRefreshTokenRepository refreshTokens)
+            IRefreshTokenRepository refreshTokens,
+            IProductImageRepository productImages,
+            IAiChatMessageRepository aiChatMessages)
         {
             _context = context;
 
@@ -63,6 +72,8 @@ namespace ITIGraduationProject.Infrastructure.Persistence
             GraphicAssets = graphicAssets;
             Notifications = notifications;
             RefreshTokens = refreshTokens;
+            ProductImages = productImages;
+            AiChatMessages = aiChatMessages;
         }
 
         public async Task<int> SaveChangesAsync()

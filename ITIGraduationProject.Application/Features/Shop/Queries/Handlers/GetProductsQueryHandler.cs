@@ -18,15 +18,18 @@ namespace ITIGraduationProject.Application.Features.Shop.Queries.Handlers
         IRequestHandler<GetProductsQuery, Response<PaginatedResult<ProductDto>>>
     {
         private readonly IUnitOfWork _uow;
+
         public GetProductsQueryHandler(IUnitOfWork uow)
         {
             _uow = uow;
         }
+
         public async Task<Response<PaginatedResult<ProductDto>>> Handle (
             GetProductsQuery request, CancellationToken ct)
         {
             var query = _uow.Products.GetTableNoTracking()
                 .Include(p => p.Category)
+                .Include(p => p.ProductImages)
                 .Where(p => !p.IsDeleted);
 
             if (request.CategoryId.HasValue)
@@ -37,6 +40,7 @@ namespace ITIGraduationProject.Application.Features.Shop.Queries.Handlers
             var result = await query
                         .ProjectToType<ProductDto>()
                         .ToPaginatedListAsync(request.PageNumber, request.PageSize);
+
             return Success(result);
         }
     }

@@ -6,13 +6,21 @@
 	<Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Compile Remove="Features\Notification\**" />
+    <EmbeddedResource Remove="Features\Notification\**" />
+    <None Remove="Features\Notification\**" />
+  </ItemGroup>
+
 	<ItemGroup>
 		<PackageReference Include="FluentValidation" Version="9.5.4" />
 		<PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="9.5.4" />
 		<PackageReference Include="Mapster" Version="10.0.8" />
 		<PackageReference Include="Mapster.DependencyInjection" Version="1.0.1" />
 		<PackageReference Include="MediatR" Version="12.5.0" />
+		<PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.11" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.16" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.16" />
 	</ItemGroup>
 
   <ItemGroup>
@@ -21,7 +29,6 @@
 
   <ItemGroup>
     <Folder Include="Features\Identitiy\Queries\" />
-    <Folder Include="Features\Notification\" />
   </ItemGroup>
 
 </Project>

@@ -2,6 +2,7 @@ using System.Threading.Tasks;
 using ITIGraduationProject.Application.Interfaces.Repositories;
 using ITIGraduationProject.Application.Repositories;
 using System.Threading.Tasks;
+using ITIGraduationProject.Application.Interfaces.IRepositories;
 
 namespace ITIGraduationProject.Application.Interfaces.Persistence
 {
@@ -22,8 +23,9 @@ namespace ITIGraduationProject.Application.Interfaces.Persistence
         IRefreshTokenRepository RefreshTokens { get; }
         ICategoryRepository Categories { get; }
         ICommunityInteractionRepository CommunityInteractions { get; }
-
-
+        IProductImageRepository ProductImages { get; }
+        IPrinterProfileRepository PrinterProfiles { get; }
+        IAiChatMessageRepository AiChatMessages { get; }
         Task<int> SaveChangesAsync();
     }
 }

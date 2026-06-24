@@ -9,5 +9,6 @@ namespace ITIGraduationProject.Domain.Enums
         TemplateLiked = 4,
         TemplateCommented = 5,
         ModerationUpdate = 6,
+        RewardEarned = 7,
     }
 }

@@ -22,6 +22,7 @@ namespace ITIGraduationProject.Api.Admin
             }
 
         [HttpGet]
+        [AllowAnonymous]
         public async Task<IActionResult> GetUsers([FromQuery] GetUsersQuery query)
         {
             var result = await _mediator.Send(query);
@@ -51,6 +52,14 @@ namespace ITIGraduationProject.Api.Admin
 
             [HttpPatch("{id}/status")]
             public async Task<IActionResult> ChangeStatus(Guid id, ChangeUserStatusCommand command)
+            {
+                command.Id = id;
+                var result = await _mediator.Send(command);
+                return StatusCode((int)result.StatusCode, result);
+            }
+
+            [HttpPatch("{id}/role")]
+            public async Task<IActionResult> ChangeRole(Guid id, ChangeUserRoleCommand command)
             {
                 command.Id = id;
                 var result = await _mediator.Send(command);
