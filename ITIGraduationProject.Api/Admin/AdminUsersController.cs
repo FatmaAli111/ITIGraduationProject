@@ -56,6 +56,14 @@ namespace ITIGraduationProject.Api.Admin
                 var result = await _mediator.Send(command);
                 return StatusCode((int)result.StatusCode, result);
             }
+
+            [HttpPatch("{id}/role")]
+            public async Task<IActionResult> ChangeRole(Guid id, ChangeUserRoleCommand command)
+            {
+                command.Id = id;
+                var result = await _mediator.Send(command);
+                return StatusCode((int)result.StatusCode, result);
+            }
         }
     
 }
