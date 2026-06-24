@@ -1,5 +1,6 @@
 ﻿using ITIGraduationProject.Application.CQRS.Commands;
 using ITIGraduationProject.Application.Features.Studio.Commands.CreateAIChatMessage;
+using ITIGraduationProject.Application.Interfaces.IServices.FilesServices;
 using ITIGraduationProject.Application.Features.Studio.Commands.CreateAIChatSession;
 using ITIGraduationProject.Application.Features.Studio.Commands.CreateDesign;
 using ITIGraduationProject.Application.Features.Studio.Commands.CreateGraphicAsset;
@@ -27,10 +28,12 @@ namespace ITIGraduationProject.Api.Controllers
     public class DesignStudioController : ControllerBase
     {
         private readonly ISender _mediator;
+        private readonly IFileService _fileService;
 
-        public DesignStudioController(ISender mediator)
+        public DesignStudioController(ISender mediator, IFileService fileService)
         {
             _mediator = mediator;
+            _fileService = fileService;
         }
 
         [HttpGet("products")]
@@ -58,6 +61,19 @@ namespace ITIGraduationProject.Api.Controllers
         {
             var designId = await _mediator.Send(command, cancellationToken);
             return CreatedAtAction(nameof(CreateDesign), new { id = designId }, designId);
+        }
+
+        [HttpPost("upload-snapshot")]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> UploadSnapshot(IFormFile file, CancellationToken cancellationToken)
+        {
+            if (file is null || file.Length == 0)
+            {
+                return BadRequest("No snapshot file was provided.");
+            }
+
+            var snapshotUrl = await _fileService.UploadFileAsync(file, "designs");
+            return Ok(snapshotUrl);
         }
 
         [HttpPut("{id:guid}")]
