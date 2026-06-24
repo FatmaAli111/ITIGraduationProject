@@ -16,6 +16,7 @@ namespace ITIGraduationProject.Application.Interfaces.IServices.AdminIServices
         Task<Response<UserDetailsDTO>> GetUserByIdAsync(Guid id);
         Task<Response<string>> UpdateUserAsync(Guid id, UpdateUserRequestDTO request);
         Task<Response<string>> ChangeUserStatusAsync(Guid id, bool isActive);
+        Task<Response<string>> ChangeUserRoleAsync(Guid id, string newRole);
         Task<string> GetUserRoleAsync(Guid userId);
     }
 }

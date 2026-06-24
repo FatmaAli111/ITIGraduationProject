@@ -19,7 +19,7 @@ public class OrderItemConfiguration : IEntityTypeConfiguration<OrderItem>
         builder.Property(oi => oi.Quantity).IsRequired();
         builder.Property(oi => oi.OrderId).IsRequired();
         builder.Property(oi => oi.DesignId).IsRequired();
-        builder.Property(oi => oi.PrinterProfileId).IsRequired();
+        builder.Property(oi => oi.PrinterProfileId);
 
     }
 }

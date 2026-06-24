@@ -10,6 +10,6 @@ namespace ITIGraduationProject.Application.DTOS.Orders
     {
         public Guid DesignId { get; set; }
         public int Quantity { get; set; }
-        public Guid PrinterProfileId { get; set; }
+        public Guid? PrinterProfileId { get; set; }
     }
 }

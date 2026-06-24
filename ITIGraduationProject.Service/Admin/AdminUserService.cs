@@ -185,6 +185,23 @@ namespace ITIGraduationProject.Service.Admin
             return Success<string>(null, isActive ? "User activated." : "User deactivated.");
         }
 
+        public async Task<Response<string>> ChangeUserRoleAsync(Guid id, string newRole)
+        {
+            var validRoles = new[] { Roles.Admin, Roles.User, Roles.Printer };
+            if (!validRoles.Contains(newRole))
+                return BadRequest<string>("Invalid role.");
+
+            var applicationUser = await _userManager.FindByIdAsync(id.ToString());
+            if (applicationUser == null)
+                return NotFound<string>("User not found.");
+
+            var currentRoles = await _userManager.GetRolesAsync(applicationUser);
+            await _userManager.RemoveFromRolesAsync(applicationUser, currentRoles);
+            await _userManager.AddToRoleAsync(applicationUser, newRole);
+
+            return Success<string>(null, "User role updated successfully.");
+        }
+
         public async Task<string> GetUserRoleAsync(Guid userId)
         {
             var user = await _userManager.FindByIdAsync(userId.ToString());

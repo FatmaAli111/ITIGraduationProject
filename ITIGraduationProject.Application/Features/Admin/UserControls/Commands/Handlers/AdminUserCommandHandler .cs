@@ -15,7 +15,8 @@ namespace ITIGraduationProject.Application.Features.Admin.UserControls.Commands.
     public class AdminUserCommandHandler :
          IRequestHandler<InviteUserCommand, Response<string>>,
          IRequestHandler<UpdateUserCommand, Response<string>>,
-         IRequestHandler<ChangeUserStatusCommand, Response<string>>
+         IRequestHandler<ChangeUserStatusCommand, Response<string>>,
+         IRequestHandler<ChangeUserRoleCommand, Response<string>>
     {
         private readonly IAdminUserService _adminUserService;
         private readonly IMapper _mapper;
@@ -41,6 +42,11 @@ namespace ITIGraduationProject.Application.Features.Admin.UserControls.Commands.
         public async Task<Response<string>> Handle(ChangeUserStatusCommand request, CancellationToken cancellationToken)
         {
             return await _adminUserService.ChangeUserStatusAsync(request.Id, request.IsActive);
+        }
+
+        public async Task<Response<string>> Handle(ChangeUserRoleCommand request, CancellationToken cancellationToken)
+        {
+            return await _adminUserService.ChangeUserRoleAsync(request.Id, request.NewRole);
         }
     }
 }

@@ -26,15 +26,17 @@ namespace ITIGraduationProject.Api.Controllers
         public async Task<IActionResult> GetProductById(Guid id, CancellationToken ct)
             => Ok(await _mediator.Send(new GetProductByIdQuery(id), ct));
 
+        [HttpGet("{id:guid}/images")]
+        public async Task<IActionResult> GetProductImages(Guid id, CancellationToken ct)
+            => Ok(await _mediator.Send(new GetProductImagesQuery(id), ct));
+
         // Admin only — same controller, just protected
 
         [HttpPost]
-        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create([FromBody] CreateProductCommand cmd)
             => Ok(await _mediator.Send(cmd));
 
         [HttpPut("{id:guid}")]
-        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateProductCommand cmd)
             => Ok(await _mediator.Send(cmd with { Id = id }));
 

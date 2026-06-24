@@ -33,6 +33,10 @@ namespace ITIGraduationProject.Infrastructure.Persistence
         _communityInteractions ??= new CommunityInteractionRepository(_context);
         private ICommunityInteractionRepository? _communityInteractions;
 
+        public IPrinterProfileRepository PrinterProfiles =>
+        _printerProfiles ??= new PrinterProfileRepository(_context);
+        private IPrinterProfileRepository? _printerProfiles;
+
         public UnitOfWork(
             AppDbContext context,
             IProductRepository products,
