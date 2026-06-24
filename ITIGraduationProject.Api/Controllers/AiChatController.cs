@@ -10,8 +10,8 @@ using System.Threading.Tasks;
 namespace ITIGraduationProject.Api.Controllers
 {
     [ApiController]
+    [Authorize]
     [Route("api/[controller]")]
-    //[Authorize] 
     public class AiChatController : ControllerBase
     {
         private readonly IMediator _mediator;
@@ -21,12 +21,14 @@ namespace ITIGraduationProject.Api.Controllers
             _mediator = mediator;
         }
 
+        #region Send Chat Message
         [HttpPost("send")]
         public async Task<IActionResult> SendMessage([FromBody] SendChatMessageRequest request)
         {
             // take the real UserId from the token provided by JwtService
             var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userIdString)) return Unauthorized();
+            if (string.IsNullOrEmpty(userIdString))
+                return Unauthorized(new { message = "Token is missing user id claim." });
 
             var command = new SendChatMessageCommand
             {
@@ -36,15 +38,35 @@ namespace ITIGraduationProject.Api.Controllers
             };
 
             var response = await _mediator.Send(command);
-            return Ok(response);
-        }
+            if (response.Succeeded)
+                return Ok(response);
 
+            return BadRequest(response);
+        }
+        #endregion
+
+        #region Get Chat Session History
         [HttpGet("history/{sessionId}")]
         public async Task<IActionResult> GetChatHistory(Guid sessionId)
         {
-            var response = await _mediator.Send(new GetChatSessionHistoryQuery { SessionId = sessionId });
-            return Ok(response);
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdString))
+                return Unauthorized(new { message = "Token is missing user id claim." });
+
+            var userId = Guid.Parse(userIdString);
+
+            var response = await _mediator.Send(
+                new GetChatSessionHistoryQuery { SessionId = sessionId, RequestingUserId = userId });
+
+            if (response.Succeeded)
+                return Ok(response);
+
+            if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                return Unauthorized(response);
+
+            return NotFound(response);
         }
+        #endregion
     }
     public class SendChatMessageRequest
     {
