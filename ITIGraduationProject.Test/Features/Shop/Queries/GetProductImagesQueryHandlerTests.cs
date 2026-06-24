@@ -78,6 +78,7 @@ namespace ITIGraduationProject.Test.Features.Shop.Queries
             public IRefreshTokenRepository RefreshTokens => throw new NotImplementedException();
             public ICategoryRepository Categories => throw new NotImplementedException();
             public ICommunityInteractionRepository CommunityInteractions => throw new NotImplementedException();
+            public IPrinterProfileRepository PrinterProfiles => throw new NotImplementedException();
             public IProductImageRepository ProductImages { get; }
 
             public Task<int> SaveChangesAsync() => Task.FromResult(0);
