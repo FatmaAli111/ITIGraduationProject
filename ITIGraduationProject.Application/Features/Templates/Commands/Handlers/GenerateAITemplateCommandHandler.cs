@@ -2,6 +2,7 @@
 using ITIGraduationProject.Application.DTOS.TemplateDTOs;
 using ITIGraduationProject.Application.Features.Templates.Commands.Models;
 using ITIGraduationProject.Application.Interfaces;
+using ITIGraduationProject.Application.Interfaces.IRepositories;
 using ITIGraduationProject.Application.Interfaces.Persistence;
 using ITIGraduationProject.Domain.Entities.Products;
 using Mapster;

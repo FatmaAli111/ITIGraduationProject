@@ -1,4 +1,4 @@
-﻿using ITIGraduationProject.Application.Features.Templates.Commands.Models;
+using ITIGraduationProject.Application.Features.Templates.Commands.Models;
 using ITIGraduationProject.Application.Features.Templates.Queries.Models;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -35,6 +35,11 @@ namespace ITIGraduationProject.Api.Controllers
         [HttpPost("generate")]
         [Authorize]
         public async Task<IActionResult> Generate([FromBody] GenerateAITemplateCommand cmd)
+            => Ok(await _mediator.Send(cmd));
+
+        [HttpPost("generate-variations")]
+        [Authorize]
+        public async Task<IActionResult> GenerateVariations([FromBody] GenerateThreeVariationsCommand cmd)
             => Ok(await _mediator.Send(cmd));
 
         [HttpPut("{id:guid}")]

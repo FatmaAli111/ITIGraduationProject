@@ -1,4 +1,4 @@
-﻿using ITIGraduationProject.Application.Interfaces;
+using ITIGraduationProject.Application.Interfaces;
 using ITIGraduationProject.Application.Interfaces.IRepositories;
 using ITIGraduationProject.Application.Interfaces.IServices.Notification;
 using ITIGraduationProject.Application.Interfaces.IServices.StudioServices;
@@ -109,12 +109,35 @@ namespace ITIGraduationProject.Infrastructure
             //    //options.AppSecret =
             //    //    configuration["Authentication:Facebook:Facebook:AppSecret"];
             //});
-            services.AddHttpClient<IAILayerClient, AILayerClient>(client =>
+            // LangFlow client (named)
+            services.AddHttpClient("LangFlow", client =>
             {
                 client.BaseAddress = new Uri(configuration["AILayer:BaseUrl"]!);
                 client.Timeout = TimeSpan.FromSeconds(300);
                 client.DefaultRequestHeaders.Add("x-api-key", configuration["AILayer:ApiKey"]);
             });
+
+            // Mistral AI client (for direct prompt generation)
+            var mistralKey = configuration["AI:Direct:MistralApiKey"];
+            services.AddHttpClient("Mistral", client =>
+            {
+                client.BaseAddress = new Uri("https://api.mistral.ai");
+                client.Timeout = TimeSpan.FromSeconds(120);
+                if (!string.IsNullOrEmpty(mistralKey))
+                    client.DefaultRequestHeaders.Add("Authorization", $"Bearer {mistralKey}");
+            });
+
+            // JigsawStack client (for direct image generation)
+            var jigsawKey = configuration["AI:Direct:JigsawStackApiKey"];
+            services.AddHttpClient("JigsawStack", client =>
+            {
+                client.BaseAddress = new Uri("https://api.jigsawstack.com");
+                client.Timeout = TimeSpan.FromSeconds(120);
+                if (!string.IsNullOrEmpty(jigsawKey))
+                    client.DefaultRequestHeaders.Add("x-api-key", jigsawKey);
+            });
+
+            services.AddScoped<IAILayerClient, AILayerClient>();
             services.AddHttpContextAccessor();
             services.AddScoped<ICurrentUserService, CurrentUserService>();
            //signalR
