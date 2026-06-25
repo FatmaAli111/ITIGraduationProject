@@ -35,6 +35,8 @@ namespace ITIGraduationProject.Infrastructure.Persistence
 
         public IPrinterProfileRepository PrinterProfiles =>
         _printerProfiles ??= new PrinterProfileRepository(_context);
+
+        public IAiChatMessageRepository AiChatMessages { get; }
         private IPrinterProfileRepository? _printerProfiles;
 
         public IOrderItemRepository OrderItems =>
@@ -56,7 +58,8 @@ namespace ITIGraduationProject.Infrastructure.Persistence
             IGraphicAssetRepository graphicAssets,
             INotificationRepository notifications,
             IRefreshTokenRepository refreshTokens,
-            IProductImageRepository productImages)
+            IProductImageRepository productImages,
+            IAiChatMessageRepository aiChatMessages)
         {
             _context = context;
 
@@ -74,6 +77,7 @@ namespace ITIGraduationProject.Infrastructure.Persistence
             Notifications = notifications;
             RefreshTokens = refreshTokens;
             ProductImages = productImages;
+            AiChatMessages = aiChatMessages;
         }
 
         public async Task<int> SaveChangesAsync()

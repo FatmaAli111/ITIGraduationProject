@@ -9,5 +9,6 @@ namespace ITIGraduationProject.Application.Repositories
     {
         Task<AiChatSession?> GetWithMessagesAsync(Guid id);
         Task<IEnumerable<AiChatSession>> GetByUserAsync(Guid userId);
+        Task<AiChatSession?> GetWithMessagesTrackingAsync(Guid id);
     }
 }

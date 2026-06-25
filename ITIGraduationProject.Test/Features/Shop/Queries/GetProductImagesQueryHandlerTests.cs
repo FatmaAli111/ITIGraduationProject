@@ -82,6 +82,8 @@ namespace ITIGraduationProject.Test.Features.Shop.Queries
             public IOrderItemRepository OrderItems => throw new NotImplementedException();
             public IProductImageRepository ProductImages { get; }
 
+            public IAiChatMessageRepository AiChatMessages => throw new NotImplementedException();
+
             public Task<int> SaveChangesAsync() => Task.FromResult(0);
         }
 

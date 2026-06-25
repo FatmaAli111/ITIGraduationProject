@@ -22,6 +22,7 @@ namespace ITIGraduationProject.Api.Admin
             }
 
         [HttpGet]
+        [AllowAnonymous]
         public async Task<IActionResult> GetUsers([FromQuery] GetUsersQuery query)
         {
             var result = await _mediator.Send(query);

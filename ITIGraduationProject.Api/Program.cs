@@ -1,4 +1,5 @@
 using ITIGraduationProject.Api.Middlewares;
+using ITIGraduationProject.Api.Swagger;
 using ITIGraduationProject.Application;
 using ITIGraduationProject.Application.Interfaces.IServices.StudioServices;
 using ITIGraduationProject.Infrastructure;
@@ -49,6 +50,13 @@ namespace ITIGraduationProject.Api
             builder.Services.AddScoped<IPriceCalculation, PriceCalculationService>();
             builder.Services.AddSwaggerGen(options =>
             {
+                options.MapType<IFormFile>(() => new OpenApiSchema { Type = "string", Format = "binary" });
+                options.MapType<IFormFileCollection>(() => new OpenApiSchema
+                {
+                    Type = "array",
+                    Items = new OpenApiSchema { Type = "string", Format = "binary" }
+                });
+                options.OperationFilter<FileUploadOperationFilter>();
                 options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
                     Name = "Authorization",
