@@ -89,7 +89,7 @@ namespace ITIGraduationProject.Service.Identity.Authantication
 
             var encodedToken = WebUtility.UrlEncode(token);
 
-            var confirmationLink = $"{_configuration.GetSection("AppSettings:ClientBaseUrl").Value}/api/identity/confirm-email?userId={applicationUser.Id}&token={encodedToken}";
+            var confirmationLink = $"{_configuration.GetSection("ClientSettings:ClientBaseUrl").Value}/confirm-mail?userId={applicationUser.Id}&token={encodedToken}";
 
             var body = $"<h3>Welcome {request.Name}!</h3><p>Please confirm your email by clicking <a href='{confirmationLink}'>here</a>.</p>";
 
@@ -111,13 +111,14 @@ namespace ITIGraduationProject.Service.Identity.Authantication
             if (applicationUser.EmailConfirmed)
                 return Success<string>(null, "Email already confirmed.");
 
-            var decodedToken = WebUtility.UrlDecode(token);
+            var result = await _userManager.ConfirmEmailAsync(applicationUser, token);
 
-            var result = await _userManager.ConfirmEmailAsync(applicationUser, decodedToken);
             if (!result.Succeeded)
-                return BadRequest<string>("Email confirmation failed.");
+                return BadRequest<string>(
+                    string.Join(", ", result.Errors.Select(e => e.Description)));
 
             var domainUser = await _unitOfWork.Users.GetByIdAsync(parsedUserId);
+
             if (domainUser != null)
             {
                 domainUser.IsActive = true;
@@ -127,12 +128,11 @@ namespace ITIGraduationProject.Service.Identity.Authantication
 
             return Success<string>(null, "Email confirmed successfully.");
         }
-
         public async Task<Response<LoginResponseDTO>> LoginAsync(LoginRequestDTO request)
         {
             var applicationUser = await _userManager.FindByEmailAsync(request.Email);
             if (applicationUser == null)
-                return Unauthorized<LoginResponseDTO>();
+                return BadRequest<LoginResponseDTO>("This Email Doesn't Exist Please Register First");
 
             if (!applicationUser.EmailConfirmed)
                 return BadRequest<LoginResponseDTO>("Please confirm your email first.");
