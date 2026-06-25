@@ -67,9 +67,9 @@ namespace ITIGraduationProject.Api.Controllers
 
             if (response.StatusCode == System.Net.HttpStatusCode.OK)
             {
-                return Ok(response); 
+                return Ok(response);
             }
-            return BadRequest(response); 
+            return BadRequest(response);
         }
         #endregion
     }

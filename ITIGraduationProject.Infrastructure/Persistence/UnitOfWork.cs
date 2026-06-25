@@ -37,6 +37,10 @@ namespace ITIGraduationProject.Infrastructure.Persistence
         _printerProfiles ??= new PrinterProfileRepository(_context);
         private IPrinterProfileRepository? _printerProfiles;
 
+        public IOrderItemRepository OrderItems =>
+        _orderItems ??= new OrderItemRepository(_context);
+        private IOrderItemRepository? _orderItems;
+
         public UnitOfWork(
             AppDbContext context,
             IProductRepository products,
