@@ -1,4 +1,4 @@
-﻿using ITIGraduationProject.Application.CQRS.Commands;
+using ITIGraduationProject.Application.CQRS.Commands;
 using ITIGraduationProject.Application.Features.Studio.Commands.CreateAIChatMessage;
 using ITIGraduationProject.Application.Interfaces.IServices.FilesServices;
 using ITIGraduationProject.Application.Features.Studio.Commands.CreateAIChatSession;
@@ -6,6 +6,7 @@ using ITIGraduationProject.Application.Features.Studio.Commands.CreateDesign;
 using ITIGraduationProject.Application.Features.Studio.Commands.CreateGraphicAsset;
 using ITIGraduationProject.Application.Features.Studio.Commands.DeleteDesign;
 using ITIGraduationProject.Application.Features.Studio.Commands.DeleteGraphicAsset;
+using ITIGraduationProject.Application.Features.Studio.Commands.GenerateAiImage;
 using ITIGraduationProject.Application.Features.Studio.Commands.UpdateDesign;
 using ITIGraduationProject.Application.Features.Studio.Queries.GetAdminGraphicAssets;
 using ITIGraduationProject.Application.Features.Studio.Queries.GetAiChatMessages;
@@ -199,6 +200,23 @@ namespace ITIGraduationProject.Api.Controllers
                 return NotFound(new { Message = $"Graphic asset with ID {id} was not found." });
             }
 
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Generates an AI image via LangFlow using the provided prompt.
+        /// Downloads the image, stores it locally, creates a GraphicAsset linked
+        /// to the authenticated user, and returns the asset ID and local image URL.
+        /// </summary>
+        [HttpPost("generate-image")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(GenerateAiImageResult))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GenerateAiImage(
+            [FromBody] GenerateAiImageCommand command,
+            CancellationToken cancellationToken)
+        {
+            var result = await _mediator.Send(command, cancellationToken);
             return Ok(result);
         }
 
