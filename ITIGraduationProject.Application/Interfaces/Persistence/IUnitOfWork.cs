@@ -26,6 +26,8 @@ namespace ITIGraduationProject.Application.Interfaces.Persistence
         IProductImageRepository ProductImages { get; }
         IPrinterProfileRepository PrinterProfiles { get; }
         IAiChatMessageRepository AiChatMessages { get; }
+        IOrderItemRepository OrderItems { get; }
+
         Task<int> SaveChangesAsync();
     }
 }

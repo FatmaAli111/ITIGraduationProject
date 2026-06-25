@@ -39,6 +39,10 @@ namespace ITIGraduationProject.Infrastructure.Persistence
         public IAiChatMessageRepository AiChatMessages { get; }
         private IPrinterProfileRepository? _printerProfiles;
 
+        public IOrderItemRepository OrderItems =>
+        _orderItems ??= new OrderItemRepository(_context);
+        private IOrderItemRepository? _orderItems;
+
         public UnitOfWork(
             AppDbContext context,
             IProductRepository products,

@@ -21,9 +21,5 @@
     <ProjectReference Include="..\ITIGraduationProject.Application\ITIGraduationProject.Application.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Features\Identity\" />
-  </ItemGroup>
-
 </Project>
 

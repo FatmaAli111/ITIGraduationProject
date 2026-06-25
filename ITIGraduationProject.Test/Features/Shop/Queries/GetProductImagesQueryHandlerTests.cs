@@ -79,6 +79,7 @@ namespace ITIGraduationProject.Test.Features.Shop.Queries
             public ICategoryRepository Categories => throw new NotImplementedException();
             public ICommunityInteractionRepository CommunityInteractions => throw new NotImplementedException();
             public IPrinterProfileRepository PrinterProfiles => throw new NotImplementedException();
+            public IOrderItemRepository OrderItems => throw new NotImplementedException();
             public IProductImageRepository ProductImages { get; }
 
             public IAiChatMessageRepository AiChatMessages => throw new NotImplementedException();

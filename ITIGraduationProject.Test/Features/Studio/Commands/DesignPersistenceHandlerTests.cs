@@ -93,6 +93,8 @@ public class DesignPersistenceHandlerTests
 
         public IAiChatMessageRepository AiChatMessages => throw new NotImplementedException();
 
+        public IOrderItemRepository OrderItems => throw new NotImplementedException();
+
         public Task<int> SaveChangesAsync() => Task.FromResult(0);
     }
 

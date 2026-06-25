@@ -44,8 +44,15 @@ namespace ITIGraduationProject.Service.AI
                     return "Sorry, I am having trouble connecting to the AI assistant right now.";
                 }
 
-                var result = await response.Content.ReadFromJsonAsync<DifyChatResponse>();
-                return result?.Answer ?? "I could not process the response from the assistant.";
+                var result =
+                      await response.Content.ReadFromJsonAsync<DifyChatResponse>();
+
+                if (string.IsNullOrWhiteSpace(result?.Answer))
+                {
+                    return "I could not process the response from the assistant.";
+                }
+
+                return result.Answer;
             }
             catch (Exception)
             {
