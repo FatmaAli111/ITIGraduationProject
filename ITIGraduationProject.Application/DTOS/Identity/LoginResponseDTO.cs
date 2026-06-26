@@ -14,5 +14,6 @@ namespace ITIGraduationProject.Application.DTOS
         public string Name { get; set; }
         public string RefreshToken { get; set; }
         public List<string> Roles { get; set; } = new();
+        public bool OnboardingCompleted { get; set; }
     }
 }
