@@ -91,10 +91,8 @@ namespace ITIGraduationProject.Api.IdentityControllers
                 _ => provider
             };
 
-            var redirectUrl = Url.Action(
-                nameof(ExternalLoginCallback),
-                "Auth");
-
+            var redirectUrl =
+                              "/api/Identity/external-login-callback";
             var properties =
                 _signInManager.ConfigureExternalAuthenticationProperties(
                     provider,
@@ -105,10 +103,24 @@ namespace ITIGraduationProject.Api.IdentityControllers
         [HttpGet("external-login-callback")]
         public async Task<IActionResult> ExternalLoginCallback()
         {
-            var response =
-                await _mediatr.Send(
-                    new ExternalLoginCommand());
-            return Ok(response);
+            var response = await _mediatr.Send(new ExternalLoginCommand());
+
+            if (!response.Succeeded)
+            {
+                return Redirect(
+                    $"http://localhost:4200/auth?error={Uri.EscapeDataString(response.Message ?? "Google login failed")}");
+            }
+
+            var data = response.Data;
+
+            var redirectUrl =
+                $"http://localhost:4200/auth/google-callback" +
+                $"?id={Uri.EscapeDataString(data.Name)}" +
+                $"&email={Uri.EscapeDataString(data.Email)}" +
+                $"&accessToken={Uri.EscapeDataString(data.AccessToken)}" +
+                $"&refreshToken={Uri.EscapeDataString(data.RefreshToken)}";
+
+            return Redirect(redirectUrl);
         }
     }
 }

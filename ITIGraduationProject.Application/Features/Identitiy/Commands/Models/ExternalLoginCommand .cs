@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace ITIGraduationProject.Application.Features.Identitiy.Commands.Models
 {
-    public class ExternalLoginCommand : IRequest<Response<ExternalLoginResponseDTO>>
+    public class ExternalLoginCommand : IRequest<Response<LoginResponseDTO>>
     {
        
     }

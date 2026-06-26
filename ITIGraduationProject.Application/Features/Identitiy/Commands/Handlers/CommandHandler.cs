@@ -17,7 +17,7 @@ namespace ITIGraduationProject.Application.Features.Identitiy.Commands.Handlers
         , IRequestHandler<LogoutAllDevicesCommand, Response<string>>
         , IRequestHandler<ForgetPasswordCommand, Response<string>>
         , IRequestHandler<ResetPasswordCommand, Response<string>>
-        ,IRequestHandler<ExternalLoginCommand,Response<ExternalLoginResponseDTO>>
+        ,IRequestHandler<ExternalLoginCommand,Response<LoginResponseDTO>>
 
     {
         private readonly IIdentityService _identityService;
@@ -76,7 +76,7 @@ namespace ITIGraduationProject.Application.Features.Identitiy.Commands.Handlers
                 request.Token,
                 request.NewPassword);
         }
-        public async Task<Response<ExternalLoginResponseDTO>> Handle(
+        public async Task<Response<LoginResponseDTO>> Handle(
     ExternalLoginCommand request,
     CancellationToken cancellationToken)
         {

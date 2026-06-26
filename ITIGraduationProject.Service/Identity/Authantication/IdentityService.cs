@@ -150,7 +150,7 @@ namespace ITIGraduationProject.Service.Identity.Authantication
                 if (await _userManager.IsLockedOutAsync(applicationUser))
                     return BadRequest<LoginResponseDTO>("Account locked due to multiple failed attempts. Try again after 15 minutes.");
 
-                return Unauthorized<LoginResponseDTO>();
+                return BadRequest<LoginResponseDTO>("Email or Password Wrong");
             }
 
             await _userManager.ResetAccessFailedCountAsync(applicationUser);
@@ -299,7 +299,7 @@ namespace ITIGraduationProject.Service.Identity.Authantication
             var encodedToken = WebUtility.UrlEncode(token);
 
             var resetLink =
-                $"{_configuration.GetSection("AppSettings:ClientBaseUrl").Value}/reset-password?email={user.Email}&token={encodedToken}";
+                $"{_configuration.GetSection("ClientSettings:ClientBaseUrl").Value}/reset-password?email={user.Email}&token={encodedToken}";
 
             var body =
                 $"<h3>Password Reset</h3>" +
@@ -324,11 +324,11 @@ namespace ITIGraduationProject.Service.Identity.Authantication
             if (user == null)
                 return NotFound<string>("User not found.");
 
-            var decodedToken = WebUtility.UrlDecode(token);
+            //var decodedToken = WebUtility.UrlDecode(token);
 
             var result = await _userManager.ResetPasswordAsync(
                 user,
-                decodedToken,
+                token,
                 newPassword);
 
             if (!result.Succeeded)
@@ -340,12 +340,12 @@ namespace ITIGraduationProject.Service.Identity.Authantication
                 "Password reset successfully.");
         }
 
-        public async Task<Response<ExternalLoginResponseDTO>> ExternalLoginAsync()
+        public async Task<Response<LoginResponseDTO>> ExternalLoginAsync()
         {
             var info = await _signInManager.GetExternalLoginInfoAsync();
 
             if (info == null)
-                return BadRequest<ExternalLoginResponseDTO>(
+                return BadRequest<LoginResponseDTO>(
                     "External login failed.");
 
 
@@ -354,7 +354,7 @@ namespace ITIGraduationProject.Service.Identity.Authantication
 
 
             if (string.IsNullOrEmpty(email))
-                return BadRequest<ExternalLoginResponseDTO>(
+                return BadRequest<LoginResponseDTO>(
                     "Email not found from provider.");
 
 
@@ -408,7 +408,7 @@ namespace ITIGraduationProject.Service.Identity.Authantication
                     _unitOfWork.Users.Delete(domainUser);
                     await _unitOfWork.SaveChangesAsync();
 
-                    return BadRequest<ExternalLoginResponseDTO>(
+                    return BadRequest<LoginResponseDTO>(
                         string.Join(", ",
                         result.Errors.Select(e => e.Description)));
                 }
@@ -471,9 +471,9 @@ namespace ITIGraduationProject.Service.Identity.Authantication
 
 
 
-            var response = new ExternalLoginResponseDTO
+            var response = new LoginResponseDTO
             {
-                Id = applicationUser.Id.ToString(),
+                Name= applicationUser.UserName,
                 Email = applicationUser.Email,
                 AccessToken = accessToken,
                 RefreshToken = refreshTokenValue

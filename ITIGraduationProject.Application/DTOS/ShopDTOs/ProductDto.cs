@@ -15,5 +15,6 @@ namespace ITIGraduationProject.Application.DTOS.ShopDTOs
         public string PreviewImageUrl { get; set; }
         public bool IsAvailable { get; set; }
         public decimal AverageRating { get; set; }
+        public int ReviewCount { get; set; }
     }
 }

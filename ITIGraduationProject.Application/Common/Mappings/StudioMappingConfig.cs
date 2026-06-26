@@ -48,7 +48,8 @@ namespace ITIGraduationProject.Application.Common.Mappings
                         .Select(img => img.ImageUrl)
                         .FirstOrDefault() ?? string.Empty)
                 .Map(dest => dest.IsAvailable, src => src.IsAvailable)
-                .Map(dest => dest.AverageRating, src => src.AverageRating);
+                .Map(dest => dest.AverageRating, src => src.AverageRating)
+                .Map(dest => dest.ReviewCount, src => src.ReviewCount);
 
             config.NewConfig<Product, StudioProductListItemDto>()
             .Map(dest => dest.Id, src => src.Id)
