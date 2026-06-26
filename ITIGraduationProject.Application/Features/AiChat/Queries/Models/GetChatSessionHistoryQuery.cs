@@ -1,6 +1,7 @@
 ﻿using MediatR;
 using ITIGraduationProject.Application.Bases;
 using System;
+using ITIGraduationProject.Domain.Entities.AIAndModeration;
 using ITIGraduationProject.Application.DTOS.AiChat;
 
 namespace ITIGraduationProject.Application.Features.AiChat.Queries.Models

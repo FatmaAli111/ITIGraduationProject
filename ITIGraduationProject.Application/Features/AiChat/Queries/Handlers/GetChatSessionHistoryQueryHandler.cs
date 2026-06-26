@@ -6,10 +6,11 @@ using MediatR;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using ITIGraduationProject.Application.DTOS.AiChat;
 
 namespace ITIGraduationProject.Application.Features.AiChat.Queries.Handlers
 {
-    public class GetChatSessionHistoryQueryHandler : IRequestHandler<GetChatSessionHistoryQuery, Response<ChatHistoryDto>>
+    public class GetChatSessionHistoryQueryHandler :ResponseHandler, IRequestHandler<GetChatSessionHistoryQuery, Response<ChatHistoryDto>>
     {
         #region Dependency Injection
         private readonly IUnitOfWork _unitOfWork;
@@ -26,23 +27,24 @@ namespace ITIGraduationProject.Application.Features.AiChat.Queries.Handlers
             var session = await _unitOfWork.AiChatSessions.GetWithMessagesAsync(request.SessionId);
 
             if (session == null)
-                return new Response<ChatHistoryDto>("Chat session not found.");
-
-            var chatHistoryDto = new ChatHistoryDto
+                return  BadRequest<ChatHistoryDto>("Chat session not found.");
+         
+            var dto = new ChatHistoryDto
             {
                 SessionId = session.Id,
-                SessionType = session.SessionType.ToString(),
-                CreatedAt = System.DateTime.UtcNow,
-                Messages = session.AiChatMessages.Select(m => new ChatMessageDto
-                {
-                    Id = m.Id,
-                    Sender = m.Sender,
-                    MessageText = m.MessageText,
-                    SentAt = m.SentAt
-                }).OrderBy(m => m.SentAt).ToList()
+                Messages = session.AiChatMessages
+                    .OrderBy(x => x.SentAt)
+                    .Select(x => new ChatMessageDto
+                    {
+                        Id = x.Id,
+                        Sender = x.Sender,
+                        MessageText = x.MessageText,
+                        SentAt = x.SentAt
+                    })
+                    .ToList()
             };
 
-            return new Response<ChatHistoryDto>(chatHistoryDto);
+            return Success<ChatHistoryDto>(dto);
         }
         #endregion
     }

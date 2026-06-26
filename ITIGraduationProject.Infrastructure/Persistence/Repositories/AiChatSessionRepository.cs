@@ -17,7 +17,6 @@ namespace ITIGraduationProject.Infrastructure.Persistence.Repositories
         public async Task<AiChatSession?> GetWithMessagesAsync(Guid id)
         {
             return await _context.AiChatSessions
-                .AsNoTracking()
                 .Include(s => s.AiChatMessages)
                 .FirstOrDefaultAsync(s => s.Id == id);
         }

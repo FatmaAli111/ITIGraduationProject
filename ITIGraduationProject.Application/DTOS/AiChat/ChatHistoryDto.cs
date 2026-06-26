@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace ITIGraduationProject.Application.DTOS.AiChat
 {
@@ -11,11 +14,6 @@ namespace ITIGraduationProject.Application.DTOS.AiChat
         public List<ChatMessageDto> Messages { get; set; } = new();
     }
 
-    public class ChatMessageDto
-    {
-        public Guid Id { get; set; }
-        public string Sender { get; set; } = string.Empty; // "User" or "AI_Assistant"
-        public string MessageText { get; set; } = string.Empty;
-        public DateTime SentAt { get; set; }
+        public List<ChatMessageDto> Messages { get; set; } = [];
     }
 }
