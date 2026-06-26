@@ -206,6 +206,20 @@ public class DesignPersistenceHandlerTests
 
         public Task<IEnumerable<Design>> GetByStatusAsync(DesignStatus status) =>
             Task.FromResult<IEnumerable<Design>>(_designs.Where(x => x.Status == status));
+
+        public Task SetGraphicAssetsAsync(Design design, IList<GraphicAsset> assets, CancellationToken cancellationToken = default)
+        {
+            design.GraphicAssets.Clear();
+            foreach (var asset in assets)
+            {
+                design.GraphicAssets.Add(asset);
+            }
+            return Task.CompletedTask;
+        }
+
+        public List<string> GetChangeTrackerState() => new();
+
+        public Task<int> GetDesignGraphicAssetsCountAsync(Guid designId, CancellationToken cancellationToken = default) => Task.FromResult(0);
     }
 
     private sealed class FakeGraphicAssetRepository : IGraphicAssetRepository
