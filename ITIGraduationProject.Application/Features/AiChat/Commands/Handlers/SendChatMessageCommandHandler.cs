@@ -41,7 +41,6 @@ namespace ITIGraduationProject.Application.Features.AiChat.Commands.Handlers
                 await _unitOfWork.AiChatSessions.AddAsync(session);
             }
 
-            // Saving user message in the database
             var userMsg = new AiChatMessage
             {
                 Id = Guid.NewGuid(),
@@ -50,12 +49,13 @@ namespace ITIGraduationProject.Application.Features.AiChat.Commands.Handlers
                 MessageText = request.MessageText,
                 SentAt = DateTime.UtcNow
             };
-            session.AiChatMessages.Add(userMsg);
 
-            // Fetch the live response from Gemini via the newly integrated Dify workflow
+            await _unitOfWork.AiChatMessages.AddAsync(userMsg);
+
+
             string aiReplyText = await _aiService.AskGeminiAsync(request.MessageText);
 
-            // Saving AI response in the database
+
             var aiMsg = new AiChatMessage
             {
                 Id = Guid.NewGuid(),
@@ -64,10 +64,11 @@ namespace ITIGraduationProject.Application.Features.AiChat.Commands.Handlers
                 MessageText = aiReplyText,
                 SentAt = DateTime.UtcNow
             };
-            session.AiChatMessages.Add(aiMsg);
+
+            await _unitOfWork.AiChatMessages.AddAsync(aiMsg);
+
 
             await _unitOfWork.SaveChangesAsync();
-
             return new Response<string>(aiReplyText);
         }
         #endregion
