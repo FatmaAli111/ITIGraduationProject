@@ -18,7 +18,6 @@ namespace ITIGraduationProject.Infrastructure.Persistence.Repositories
         public async Task<Design?> GetWithImagesAndAssetsAsync(Guid id)
         {
             return await _context.Designs
-                .AsNoTracking()
                 .Include(d => d.DesignImages)
                 .Include(d => d.GraphicAssets)
                 .FirstOrDefaultAsync(d => d.Id == id);
