@@ -9,7 +9,9 @@ namespace ITIGraduationProject.Application.Features.Studio.Commands.UpdateDesign
 public record UpdateDesignCommand(
     Guid Id,
     string CanvasStateJSON,
-    string SnapshotImageURL,
+    string? Base64Snapshot,
+    string? Base64Front,
+    string? Base64Back,
     ProductSize? SelectedSize,
     FabricType? SelectedFabric,
     PrintMethodType? SelectedPrintMethod,
