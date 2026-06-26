@@ -5,12 +5,16 @@ using ITIGraduationProject.Application.Interfaces.Persistence;
 using Mapster;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-
-
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace ITIGraduationProject.Application.Features.Profiles.Queries.Handlers
 {
-    public class GetProfileHandler : ResponseHandler , IRequestHandler<GetProfileQuery, Response<ProfileDTO>>
+    public class GetProfileHandler : ResponseHandler, IRequestHandler<GetProfileQuery, Response<ProfileDTO>>
     {
         #region Dependency Injection
         private readonly IUnitOfWork _unitOfWork;
@@ -22,9 +26,18 @@ namespace ITIGraduationProject.Application.Features.Profiles.Queries.Handlers
         #endregion
 
         #region Handle Method
-        public async Task<Response<ProfileDTO>> Handle(GetProfileQuery request, CancellationToken cancellationToken){
+        public async Task<Response<ProfileDTO>> Handle(GetProfileQuery request, CancellationToken cancellationToken)
+        {
 
-            var userGuid = Guid.Parse(request.UserId);
+            var userBasic = await _unitOfWork.Users.GetTableNoTracking()
+                .FirstOrDefaultAsync(u => u.Email == request.Email, cancellationToken);
+
+            if (userBasic == null)
+            {
+                return NotFound<ProfileDTO>("User not found");
+            }
+
+            var userGuid = userBasic.Id;
 
             var user = await _unitOfWork.Users.GetWithProfileCartAndPreferencesAsync(userGuid);
 
@@ -62,10 +75,9 @@ namespace ITIGraduationProject.Application.Features.Profiles.Queries.Handlers
             #endregion
 
             #region Response
-                return Success(profileDTO);
+            return Success(profileDTO);
             #endregion
         }
         #endregion
-
     }
 }

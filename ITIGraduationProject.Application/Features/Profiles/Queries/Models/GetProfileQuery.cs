@@ -11,7 +11,6 @@ namespace ITIGraduationProject.Application.Features.Profiles.Queries.Models
 {
     public class GetProfileQuery : IRequest<Response<ProfileDTO>>
     {
-        public string UserId { get; set; }
-
+        public string Email { get; set; }
     }
 }

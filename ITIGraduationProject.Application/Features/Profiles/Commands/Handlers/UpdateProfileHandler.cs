@@ -10,14 +10,14 @@ using System.Linq;
 using System.IO;
 using System.Net;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using ITIGraduationProject.Application.Features.Profiles.Commands.Models;
 
-
-
 namespace ITIGraduationProject.Application.Features.Profiles.Commands.Handlers
 {
-    public class UpdateProfileHandler : ResponseHandler, IRequestHandler<UpdateProfileCommand, Response<string>> {
+    public class UpdateProfileHandler : ResponseHandler, IRequestHandler<UpdateProfileCommand, Response<string>>
+    {
 
         #region Dependency Injection 
         private readonly IUnitOfWork _unitOfWork;
@@ -29,10 +29,18 @@ namespace ITIGraduationProject.Application.Features.Profiles.Commands.Handlers
         #endregion
 
         #region Handle Method
-        public async Task<Response<string>> Handle(UpdateProfileCommand request, CancellationToken cancellationToken){
+        public async Task<Response<string>> Handle(UpdateProfileCommand request, CancellationToken cancellationToken)
+        {
 
-            var userGuid = Guid.Parse(request.UserId);
-            var user = await _unitOfWork.Users.GetByIdAsync(userGuid);
+            var userBasic = await _unitOfWork.Users.GetTableNoTracking()
+                .FirstOrDefaultAsync(u => u.Email == request.Email, cancellationToken);
+
+            if (userBasic == null)
+            {
+                return NotFound<string>("User not found.");
+            }
+
+            var user = await _unitOfWork.Users.GetByIdAsync(userBasic.Id);
 
             if (user == null)
             {
@@ -40,11 +48,12 @@ namespace ITIGraduationProject.Application.Features.Profiles.Commands.Handlers
             }
 
             #region Handling Images Profile to Save them in the folder
-
-            if (request.ProfileImage != null && request.ProfileImage.Length > 0) {
+            if (request.ProfileImage != null && request.ProfileImage.Length > 0)
+            {
 
                 var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "profiles");
-                if (!Directory.Exists(uploadsFolder)) {
+                if (!Directory.Exists(uploadsFolder))
+                {
                     Directory.CreateDirectory(uploadsFolder);
                 }
 
@@ -52,13 +61,12 @@ namespace ITIGraduationProject.Application.Features.Profiles.Commands.Handlers
                 var uniqueFileName = Guid.NewGuid().ToString() + "_" + request.ProfileImage.FileName;
                 var filePath = Path.Combine(uploadsFolder, uniqueFileName);
 
-                using (var fileStream = new FileStream(filePath, FileMode.Create)) {
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                {
                     await request.ProfileImage.CopyToAsync(fileStream);
                 }
 
                 user.ProfileImageUrl = $"/images/profiles/{uniqueFileName}";
-
-
             }
             #endregion
 
@@ -73,7 +81,6 @@ namespace ITIGraduationProject.Application.Features.Profiles.Commands.Handlers
             var result = await _unitOfWork.SaveChangesAsync();
 
             #region Updates Processes Result
-
             if (result > 0)
             {
                 return Success("Success");
