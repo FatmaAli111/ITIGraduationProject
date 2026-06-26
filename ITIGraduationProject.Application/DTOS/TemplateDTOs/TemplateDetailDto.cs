@@ -18,7 +18,9 @@ namespace ITIGraduationProject.Application.DTOS.TemplateDTOs
         public decimal AverageRating { get; set; }
         public int ReviewCount { get; set; }
         public Guid CategoryId { get; set; }
+        public string CategoryName { get; set; } = string.Empty;
         public Guid CreatorUserId { get; set; }
+        public string CreatorName { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
     }
 }

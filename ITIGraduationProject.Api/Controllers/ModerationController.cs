@@ -1,5 +1,6 @@
 using ITIGraduationProject.Application.Features.Community.Commands.Models;
 using ITIGraduationProject.Application.Features.Community.Queries.Models;
+using ITIGraduationProject.Domain.Constants;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -8,7 +9,7 @@ namespace ITIGraduationProject.Api.Controllers
 {
     [Route("api/admin/moderation")]
     [ApiController]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = Roles.Admin)]
     public class ModerationController : ControllerBase
     {
         private readonly IMediator _mediator;
@@ -16,7 +17,6 @@ namespace ITIGraduationProject.Api.Controllers
         public ModerationController(IMediator mediator) => _mediator = mediator;
 
         [HttpGet("reports")]
-        [AllowAnonymous]
         public async Task<IActionResult> GetReports([FromQuery] GetModerationReportsQuery query)
             => Ok(await _mediator.Send(query));
 

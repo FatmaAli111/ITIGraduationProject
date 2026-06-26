@@ -18,7 +18,9 @@ using ITIGraduationProject.Application.Features.Studio.Queries.GetStudioProducts
 using ITIGraduationProject.Application.Features.Studio.Queries.GetUserAiChatSessions;
 using ITIGraduationProject.Application.Features.Studio.Queries.GetUserDesigns;
 using ITIGraduationProject.Domain.Enums;
+using ITIGraduationProject.Application.Interfaces;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Hosting;
@@ -26,6 +28,7 @@ using System.IO;
 
 namespace ITIGraduationProject.Api.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class DesignStudioController : ControllerBase
@@ -33,14 +36,21 @@ namespace ITIGraduationProject.Api.Controllers
         private readonly ISender _mediator;
         private readonly IFileService _fileService;
         private readonly IWebHostEnvironment _webHostEnvironment;
+        private readonly ICurrentUserService _currentUserService;
 
-        public DesignStudioController(ISender mediator, IFileService fileService, IWebHostEnvironment webHostEnvironment)
+        public DesignStudioController(
+            ISender mediator,
+            IFileService fileService,
+            IWebHostEnvironment webHostEnvironment,
+            ICurrentUserService currentUserService)
         {
             _mediator = mediator;
             _fileService = fileService;
             _webHostEnvironment = webHostEnvironment;
+            _currentUserService = currentUserService;
         }
 
+        [AllowAnonymous]
         [HttpGet("products")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<StudioProductListItemDto>))]
         public async Task<IActionResult> GetStudioProducts(CancellationToken cancellationToken)
@@ -50,6 +60,7 @@ namespace ITIGraduationProject.Api.Controllers
             return Ok(result);
         }
 
+        [AllowAnonymous]
         [HttpGet("products/{id:guid}")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(StudioProductDetailDto))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -61,6 +72,7 @@ namespace ITIGraduationProject.Api.Controllers
         }
 
         [HttpPost]
+        [RequestSizeLimit(52_428_800)] // 50 MB — base64 snapshots can be large
         [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(Guid))]
         public async Task<IActionResult> CreateDesign([FromBody] CreateDesignCommand command, CancellationToken cancellationToken)
         {
@@ -116,10 +128,11 @@ namespace ITIGraduationProject.Api.Controllers
             return Ok(result);
         }
 
-        [HttpGet("user/{userId:guid}")]
+        [HttpGet("user")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<DesignResponseDto>))]
-        public async Task<IActionResult> GetUserDesigns([FromRoute] Guid userId, CancellationToken cancellationToken)
+        public async Task<IActionResult> GetUserDesigns(CancellationToken cancellationToken)
         {
+            var userId = _currentUserService.UserId;
             var query = new GetUserDesignsQuery(userId);
             var result = await _mediator.Send(query, cancellationToken);
             return Ok(result);
@@ -150,10 +163,11 @@ namespace ITIGraduationProject.Api.Controllers
             return Ok(result);
         }
 
-        [HttpGet("/api/ai-chat/user/{userId:guid}/sessions")]
+        [HttpGet("/api/ai-chat/user/sessions")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<ITIGraduationProject.Application.Features.Studio.Queries.GetUserAiChatSessions.AiChatSessionDto>))]
-        public async Task<IActionResult> GetUserAiChatSessions([FromRoute] Guid userId, CancellationToken cancellationToken)
+        public async Task<IActionResult> GetUserAiChatSessions(CancellationToken cancellationToken)
         {
+            var userId = _currentUserService.UserId;
             var query = new GetUserAiChatSessionsQuery(userId);
             var result = await _mediator.Send(query, cancellationToken);
             return Ok(result);
@@ -169,12 +183,14 @@ namespace ITIGraduationProject.Api.Controllers
 
         [HttpGet("graphic-assets")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<GraphicAssetDto>))]
-        public async Task<IActionResult> GetCurrentUserGraphicAssets([FromQuery] GraphicAssetType? type, [FromQuery] Guid currentUserId, CancellationToken cancellationToken)
+        public async Task<IActionResult> GetCurrentUserGraphicAssets([FromQuery] GraphicAssetType? type, CancellationToken cancellationToken)
         {
-            var result = await _mediator.Send(new GetGraphicAssetsQuery(type, currentUserId), cancellationToken);
+            var userId = _currentUserService.UserId;
+            var result = await _mediator.Send(new GetGraphicAssetsQuery(type, userId), cancellationToken);
             return Ok(result);
         }
 
+        [AllowAnonymous]
         [HttpGet("graphic-assets/admin")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<GraphicAssetDto>))]
         public async Task<IActionResult> GetAdminGraphicAssets([FromQuery] GraphicAssetType? type, CancellationToken cancellationToken)
@@ -224,6 +240,7 @@ namespace ITIGraduationProject.Api.Controllers
             return Ok(result);
         }
 
+        [AllowAnonymous]
         [HttpGet("graphic-asset-file/{userId:guid}/{fileName}")]
         public async Task<IActionResult> GetGraphicAssetFile([FromRoute] Guid userId, [FromRoute] string fileName)
         {

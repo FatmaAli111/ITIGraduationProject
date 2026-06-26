@@ -8,6 +8,7 @@ using ITIGraduationProject.Infrastructure.Persistence;
 using ITIGraduationProject.Service;
 using ITIGraduationProject.Service.Studio;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -22,9 +23,17 @@ namespace ITIGraduationProject.Api
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            builder.WebHost.ConfigureKestrel(options =>
+            {
+                options.Limits.MaxRequestBodySize = 52_428_800; // 50 MB
+            });
+
             // Add services to the container.
 
-            builder.Services.AddControllers();
+            builder.Services.AddControllers(options =>
+            {
+                options.MaxModelBindingCollectionSize = int.MaxValue;
+            });
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
@@ -100,9 +109,36 @@ namespace ITIGraduationProject.Api
             // Configure the HTTP request pipeline.
             app.UseMiddleware<ErrorHandlerMiddleware>();
 
+            app.Use(async (context, next) =>
+            {
+                context.Response.Headers["Access-Control-Allow-Origin"] = "http://localhost:4200";
+                context.Response.Headers["Access-Control-Allow-Headers"] = "*";
+                context.Response.Headers["Access-Control-Allow-Methods"] = "GET,POST,PUT,DELETE,OPTIONS";
+
+                if (context.Request.Method.Equals(HttpMethods.Options, StringComparison.OrdinalIgnoreCase))
+                {
+                    context.Response.StatusCode = StatusCodes.Status204NoContent;
+                    return;
+                }
+
+                await next();
+            });
+
             app.UseHttpsRedirection();
-            app.UseStaticFiles(); // serves wwwroot/ contents
             app.UseCors("AllowFrontend");
+
+            var staticFileOptions = new StaticFileOptions
+            {
+                ServeUnknownFileTypes = true,
+                OnPrepareResponse = context =>
+                {
+                    context.Context.Response.Headers.Append("Access-Control-Allow-Origin", "*");
+                    context.Context.Response.Headers.Append("Access-Control-Allow-Headers", "*");
+                    context.Context.Response.Headers.Append("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS");
+                }
+            };
+
+            app.UseStaticFiles(staticFileOptions); // serves wwwroot/ contents
 
             app.UseAuthentication();
             app.UseAuthorization();

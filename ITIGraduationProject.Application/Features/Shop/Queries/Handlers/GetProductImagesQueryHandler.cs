@@ -21,11 +21,20 @@ namespace ITIGraduationProject.Application.Features.Shop.Queries.Handlers
 
         public async Task<Response<List<ProductImageDto>>> Handle(GetProductImagesQuery request, CancellationToken ct)
         {
-            var productImages = await _uow.ProductImages.GetTableNoTracking()
+            var query = _uow.ProductImages.GetTableNoTracking()
                 .Where(x => x.ProductId == request.ProductId)
                 .OrderBy(x => x.DisplayOrder)
-                .ThenBy(x => x.IsPrimary ? 0 : 1)
-                .ToListAsync(ct);
+                .ThenBy(x => x.IsPrimary ? 0 : 1);
+
+            List<ITIGraduationProject.Domain.Entities.Products.ProductImage> productImages;
+            try
+            {
+                productImages = await query.ToListAsync(ct);
+            }
+            catch (InvalidOperationException)
+            {
+                productImages = query.ToList();
+            }
 
             var dto = productImages.Adapt<List<ProductImageDto>>();
             return Success(dto);
