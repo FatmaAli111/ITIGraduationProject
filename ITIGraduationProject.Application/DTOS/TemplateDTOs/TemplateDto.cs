@@ -16,7 +16,9 @@ namespace ITIGraduationProject.Application.DTOS.TemplateDTOs
         public int LikesCount { get; set; }
         public int RemixesCount { get; set; }
         public Guid CreatorUserId { get; set; }
+        public string CreatorName { get; set; } = string.Empty;
         public Guid CategoryId { get; set; }
+        public string CategoryName { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
     }
 }

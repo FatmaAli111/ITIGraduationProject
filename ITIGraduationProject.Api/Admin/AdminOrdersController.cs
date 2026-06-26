@@ -1,3 +1,4 @@
+using ITIGraduationProject.Application.Features.Admin.Orders.Queries.Models;
 using ITIGraduationProject.Application.Features.Orders.Commands.Models;
 using ITIGraduationProject.Domain.Constants;
 using MediatR;
@@ -7,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace ITIGraduationProject.Api.Admin
 {
     [ApiController]
-    [Route("api/admin/order-items")]
+    [Route("api/admin")]
     [Authorize(Roles = Roles.Admin)]
     public class AdminOrdersController : ControllerBase
     {
@@ -15,7 +16,11 @@ namespace ITIGraduationProject.Api.Admin
 
         public AdminOrdersController(IMediator mediator) => _mediator = mediator;
 
-        [HttpPatch("{id}/assign-printer")]
+        [HttpGet("orders")]
+        public async Task<IActionResult> GetAllOrders([FromQuery] GetAllOrdersQuery query)
+            => Ok(await _mediator.Send(query));
+
+        [HttpPatch("order-items/{id}/assign-printer")]
         public async Task<IActionResult> AssignPrinterToOrderItem(Guid id, AssignPrinterToOrderItemCommand command)
         {
             command.OrderItemId = id;
