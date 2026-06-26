@@ -21,6 +21,8 @@ using ITIGraduationProject.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Hosting;
+using System.IO;
 
 namespace ITIGraduationProject.Api.Controllers
 {
@@ -30,11 +32,13 @@ namespace ITIGraduationProject.Api.Controllers
     {
         private readonly ISender _mediator;
         private readonly IFileService _fileService;
+        private readonly IWebHostEnvironment _webHostEnvironment;
 
-        public DesignStudioController(ISender mediator, IFileService fileService)
+        public DesignStudioController(ISender mediator, IFileService fileService, IWebHostEnvironment webHostEnvironment)
         {
             _mediator = mediator;
             _fileService = fileService;
+            _webHostEnvironment = webHostEnvironment;
         }
 
         [HttpGet("products")]
@@ -218,6 +222,36 @@ namespace ITIGraduationProject.Api.Controllers
         {
             var result = await _mediator.Send(command, cancellationToken);
             return Ok(result);
+        }
+
+        [HttpGet("graphic-asset-file/{userId:guid}/{fileName}")]
+        public async Task<IActionResult> GetGraphicAssetFile([FromRoute] Guid userId, [FromRoute] string fileName)
+        {
+            var webRootPath = _webHostEnvironment.WebRootPath;
+            if (string.IsNullOrEmpty(webRootPath))
+            {
+                webRootPath = Path.Combine(_webHostEnvironment.ContentRootPath, "wwwroot");
+            }
+
+            var filePath = Path.Combine(webRootPath, "GraphicAssets", userId.ToString(), fileName);
+
+            if (!System.IO.File.Exists(filePath))
+            {
+                return NotFound(new { Message = "File not found." });
+            }
+
+            var bytes = await System.IO.File.ReadAllBytesAsync(filePath);
+            var extension = Path.GetExtension(filePath).ToLowerInvariant();
+            var contentType = extension switch
+            {
+                ".png" => "image/png",
+                ".jpg" or ".jpeg" => "image/jpeg",
+                ".webp" => "image/webp",
+                ".gif" => "image/gif",
+                _ => "application/octet-stream"
+            };
+
+            return File(bytes, contentType);
         }
 
     }
