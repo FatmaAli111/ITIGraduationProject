@@ -8,7 +8,7 @@ namespace ITIGraduationProject.Api.Admin
 {
     [ApiController]
     [Route("api/admin/dashboard")]
-    [AllowAnonymous]
+    [Authorize(Roles = Roles.Admin)]
     public class AdminDashboardController : ControllerBase
     {
         private readonly IMediator _mediator;
