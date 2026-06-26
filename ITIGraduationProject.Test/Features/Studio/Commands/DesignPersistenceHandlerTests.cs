@@ -90,10 +90,9 @@ public class DesignPersistenceHandlerTests
         public ICommunityInteractionRepository CommunityInteractions => throw new NotImplementedException();
         public IProductImageRepository ProductImages => throw new NotImplementedException();
         public IPrinterProfileRepository PrinterProfiles => throw new NotImplementedException();
-
         public IAiChatMessageRepository AiChatMessages => throw new NotImplementedException();
-
         public IOrderItemRepository OrderItems => throw new NotImplementedException();
+
 
         public Task<int> SaveChangesAsync() => Task.FromResult(0);
     }
