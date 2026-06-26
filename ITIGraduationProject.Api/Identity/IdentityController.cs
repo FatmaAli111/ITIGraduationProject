@@ -115,10 +115,12 @@ namespace ITIGraduationProject.Api.IdentityControllers
 
             var redirectUrl =
                 $"http://localhost:4200/auth/google-callback" +
-                $"?id={Uri.EscapeDataString(data.Name)}" +
+                $"?name={Uri.EscapeDataString(data.Name)}" +
+                $"&expiresAt={Uri.EscapeDataString(data.ExpiresAt.ToString("O"))}" +
                 $"&email={Uri.EscapeDataString(data.Email)}" +
                 $"&accessToken={Uri.EscapeDataString(data.AccessToken)}" +
-                $"&refreshToken={Uri.EscapeDataString(data.RefreshToken)}";
+                $"&refreshToken={Uri.EscapeDataString(data.RefreshToken)}" +
+                $"&roles={Uri.EscapeDataString(string.Join(",", data.Roles ?? new List<string>()))}";
 
             return Redirect(redirectUrl);
         }

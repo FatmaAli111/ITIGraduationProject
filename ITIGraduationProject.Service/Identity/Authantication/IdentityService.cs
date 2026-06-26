@@ -345,35 +345,21 @@ namespace ITIGraduationProject.Service.Identity.Authantication
             var info = await _signInManager.GetExternalLoginInfoAsync();
 
             if (info == null)
-                return BadRequest<LoginResponseDTO>(
-                    "External login failed.");
+                return BadRequest<LoginResponseDTO>("External login failed.");
 
-
-            var email = info.Principal
-                .FindFirstValue(ClaimTypes.Email);
-
+            var email = info.Principal.FindFirstValue(ClaimTypes.Email);
 
             if (string.IsNullOrEmpty(email))
-                return BadRequest<LoginResponseDTO>(
-                    "Email not found from provider.");
+                return BadRequest<LoginResponseDTO>("Email not found from provider.");
 
+            var name = info.Principal.FindFirstValue(ClaimTypes.Name);
 
-            var name = info.Principal
-                .FindFirstValue(ClaimTypes.Name);
-
-
-
-            var applicationUser =
-                await _userManager.FindByEmailAsync(email);
-
-
+            var applicationUser = await _userManager.FindByEmailAsync(email);
 
             if (applicationUser == null)
             {
                 var newId = Guid.NewGuid();
 
-
-                // Create Domain User
                 var domainUser = new User
                 {
                     Id = newId,
@@ -384,12 +370,8 @@ namespace ITIGraduationProject.Service.Identity.Authantication
                     Cart = new Cart()
                 };
 
-
                 await _unitOfWork.Users.AddAsync(domainUser);
 
-
-
-                // Create Identity User
                 applicationUser = new ApplicationUser
                 {
                     Id = newId,
@@ -398,10 +380,7 @@ namespace ITIGraduationProject.Service.Identity.Authantication
                     EmailConfirmed = true
                 };
 
-
-                var result =
-                    await _userManager.CreateAsync(applicationUser);
-
+                var result = await _userManager.CreateAsync(applicationUser);
 
                 if (!result.Succeeded)
                 {
@@ -409,52 +388,27 @@ namespace ITIGraduationProject.Service.Identity.Authantication
                     await _unitOfWork.SaveChangesAsync();
 
                     return BadRequest<LoginResponseDTO>(
-                        string.Join(", ",
-                        result.Errors.Select(e => e.Description)));
+                        string.Join(", ", result.Errors.Select(e => e.Description)));
                 }
 
-
-                await _userManager.AddToRoleAsync(
-                    applicationUser,
-                    Roles.User);
+                await _userManager.AddToRoleAsync(applicationUser, Roles.User);
             }
 
+            var logins = await _userManager.GetLoginsAsync(applicationUser);
 
-
-            // Check if Google login already linked
-            var logins =
-                await _userManager.GetLoginsAsync(applicationUser);
-
-
-
-            if (!logins.Any(x =>
-                x.LoginProvider == info.LoginProvider))
+            if (!logins.Any(x => x.LoginProvider == info.LoginProvider))
             {
-                await _userManager.AddLoginAsync(
-                    applicationUser,
-                    info);
+                await _userManager.AddLoginAsync(applicationUser, info);
             }
 
+            var roles = await _userManager.GetRolesAsync(applicationUser);
 
+            var (accessToken, expiresAt) = _jwtService.GenerateToken(
+                applicationUser.Id.ToString(),
+                applicationUser.Email,
+                roles.ToList());
 
-            // Generate JWT
-            var roles =
-                await _userManager.GetRolesAsync(applicationUser);
-
-
-            var (accessToken, expiresAt) =
-                _jwtService.GenerateToken(
-                    applicationUser.Id.ToString(),
-                    applicationUser.Email,
-                    roles.ToList());
-
-
-
-            // Generate Refresh Token
-            var refreshTokenValue =
-                _jwtService.GenerateRefreshToken();
-
-
+            var refreshTokenValue = _jwtService.GenerateRefreshToken();
 
             var refreshToken = new RefreshToken
             {
@@ -464,25 +418,20 @@ namespace ITIGraduationProject.Service.Identity.Authantication
                 IsRevoked = false
             };
 
-
             await _unitOfWork.RefreshTokens.AddAsync(refreshToken);
-
             await _unitOfWork.SaveChangesAsync();
-
-
 
             var response = new LoginResponseDTO
             {
-                Name= applicationUser.UserName,
+                Name = applicationUser.UserName,
                 Email = applicationUser.Email,
                 AccessToken = accessToken,
-                RefreshToken = refreshTokenValue
+                RefreshToken = refreshTokenValue,
+                ExpiresAt = expiresAt,
+                Roles = roles.ToList()
             };
 
-
-            return Success(
-                response,
-                "External login successful.");
+            return Success(response, "External login successful.");
         }
     }
 }
