@@ -19,6 +19,7 @@ using ITIGraduationProject.Application.Features.Studio.Queries.GetUserAiChatSess
 using ITIGraduationProject.Application.Features.Studio.Queries.GetUserDesigns;
 using ITIGraduationProject.Domain.Enums;
 using ITIGraduationProject.Application.Interfaces;
+using ITIGraduationProject.Application.Interfaces.IServices.StudioServices;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -37,17 +38,47 @@ namespace ITIGraduationProject.Api.Controllers
         private readonly IFileService _fileService;
         private readonly IWebHostEnvironment _webHostEnvironment;
         private readonly ICurrentUserService _currentUserService;
+        private readonly IPriceCalculation _priceCalculation;
 
         public DesignStudioController(
             ISender mediator,
             IFileService fileService,
             IWebHostEnvironment webHostEnvironment,
-            ICurrentUserService currentUserService)
+            ICurrentUserService currentUserService,
+            IPriceCalculation priceCalculation)
         {
             _mediator = mediator;
             _fileService = fileService;
             _webHostEnvironment = webHostEnvironment;
             _currentUserService = currentUserService;
+            _priceCalculation = priceCalculation;
+        }
+
+        /// <summary>
+        /// Calculates the dynamic price for a product given optional fabric, print method, and size selections.
+        /// Returns basePrice + surcharges as a single decimal value.
+        /// </summary>
+        [AllowAnonymous]
+        [HttpGet("calculate-price")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(decimal))]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> CalculatePrice(
+            [FromQuery] Guid productId,
+            [FromQuery] FabricType? fabric,
+            [FromQuery] PrintMethodType? printMethod,
+            [FromQuery] ProductSize? size,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                var total = await _priceCalculation.CalculatePriceAsync(
+                    productId, fabric, printMethod, size, cancellationToken);
+                return Ok(total);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { Message = ex.Message });
+            }
         }
 
         [AllowAnonymous]
