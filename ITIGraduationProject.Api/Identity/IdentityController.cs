@@ -2,11 +2,13 @@
 using ITIGraduationProject.Application.DTOS;
 using ITIGraduationProject.Application.Features.Identitiy.Commands.Models;
 using ITIGraduationProject.Infrastructure.Identity;
+using ITIGraduationProject.Application.Interfaces.IServices.IdentityServices;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Security.Claims;
 
 namespace ITIGraduationProject.Api.IdentityControllers
@@ -18,13 +20,15 @@ namespace ITIGraduationProject.Api.IdentityControllers
         private readonly IMediator _mediatr;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IIdentityService _identityService;
 
         public IdentityController(IMediator mediatr,SignInManager<ApplicationUser> signInManager,
-    UserManager<ApplicationUser> userManager)
+    UserManager<ApplicationUser> userManager, IIdentityService identityService)
         {
             _mediatr = mediatr;
             _signInManager = signInManager;
             _userManager = userManager;
+            _identityService = identityService;
         }
         [HttpPost("Register")]
         public async Task<IActionResult> RegisterAsync(RegisterCommand requestDTO)
@@ -48,6 +52,7 @@ namespace ITIGraduationProject.Api.IdentityControllers
         public async Task<IActionResult> RefreshToken(RefreshTokenCommand request)
         {
             var result =await _mediatr.Send(request);
+
             return Ok(result);
 
         }
@@ -120,9 +125,33 @@ namespace ITIGraduationProject.Api.IdentityControllers
                 $"&email={Uri.EscapeDataString(data.Email)}" +
                 $"&accessToken={Uri.EscapeDataString(data.AccessToken)}" +
                 $"&refreshToken={Uri.EscapeDataString(data.RefreshToken)}" +
+                $"&onboardingCompleted={data.OnboardingCompleted.ToString().ToLower()}" +
                 $"&roles={Uri.EscapeDataString(string.Join(",", data.Roles ?? new List<string>()))}";
 
             return Redirect(redirectUrl);
+        }
+
+        [Authorize]
+        [HttpPost("onboarding")]
+        public async Task<IActionResult> SaveOnboarding([FromBody] SaveOnboardingDTO dto)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userIdClaim == null || !Guid.TryParse(userIdClaim, out var userId))
+                return Unauthorized(new { succeeded = false, message = "Unauthorized" });
+
+            var result = await _identityService.SaveOnboardingAsync(userId, dto);
+            return Ok(result);
+        }
+        [Authorize]
+        [HttpGet("onboarding")]
+        public async Task<IActionResult> GetOnboarding()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userIdClaim == null || !Guid.TryParse(userIdClaim, out var userId))
+                return Unauthorized(new { succeeded = false, message = "Unauthorized" });
+
+            var result = await _identityService.GetOnboardingAsync(userId);
+            return Ok(result);
         }
     }
 }

@@ -60,6 +60,7 @@ namespace ITIGraduationProject.Service.Identity.Authantication
                 Name = request.Name,
                 IsActive = false,
                 CurrentPointsBalance = 0,
+                OnboardingCompleted = false,
                 UserPreferences = new UserPreferences(),
                 Cart = new Cart()
             };
@@ -186,7 +187,8 @@ namespace ITIGraduationProject.Service.Identity.Authantication
                 RefreshToken = refreshTokenValue,
                 Email = applicationUser.Email,
                 Name = domainUser.Name,
-                Roles = roles.ToList()
+                Roles = roles.ToList(),
+                OnboardingCompleted = domainUser.OnboardingCompleted
             };
 
             return Success(response, "Login successful.");
@@ -244,7 +246,8 @@ namespace ITIGraduationProject.Service.Identity.Authantication
                 RefreshToken = newRefreshTokenValue,
                 Email = applicationUser.Email,
                 Name = domainUser?.Name,
-                Roles = roles.ToList()
+                Roles = roles.ToList(),
+                OnboardingCompleted = domainUser?.OnboardingCompleted ?? false
             });
         }
         public async Task<Response<string>> LogoutAsync(string refreshToken)
@@ -324,8 +327,6 @@ namespace ITIGraduationProject.Service.Identity.Authantication
             if (user == null)
                 return NotFound<string>("User not found.");
 
-            //var decodedToken = WebUtility.UrlDecode(token);
-
             var result = await _userManager.ResetPasswordAsync(
                 user,
                 token,
@@ -366,6 +367,7 @@ namespace ITIGraduationProject.Service.Identity.Authantication
                     Name = name ?? email.Split('@')[0],
                     IsActive = true,
                     CurrentPointsBalance = 0,
+                    OnboardingCompleted = false,
                     UserPreferences = new UserPreferences(),
                     Cart = new Cart()
                 };
@@ -421,17 +423,58 @@ namespace ITIGraduationProject.Service.Identity.Authantication
             await _unitOfWork.RefreshTokens.AddAsync(refreshToken);
             await _unitOfWork.SaveChangesAsync();
 
+            var domainUserForResponse = await _unitOfWork.Users.GetByIdAsync(applicationUser.Id);
+
             var response = new LoginResponseDTO
             {
                 Name = applicationUser.UserName,
                 Email = applicationUser.Email,
                 AccessToken = accessToken,
                 RefreshToken = refreshTokenValue,
+
+                OnboardingCompleted = domainUserForResponse?.OnboardingCompleted ?? false,
                 ExpiresAt = expiresAt,
                 Roles = roles.ToList()
             };
 
             return Success(response, "External login successful.");
+        }
+
+        public async Task<Response<string>> SaveOnboardingAsync(Guid userId, SaveOnboardingDTO dto)
+        {
+            var domainUser = await _unitOfWork.Users.GetWithProfileCartAndPreferencesAsync(userId);
+            if (domainUser == null)
+                return NotFound<string>("User not found.");
+
+            if (domainUser.UserPreferences != null)
+            {
+                domainUser.UserPreferences.FavoriteColors = dto.FavoriteColors;
+                domainUser.UserPreferences.Interests = dto.Interests;
+                domainUser.UserPreferences.DesignPreference = dto.DesignPreference;
+            }
+
+            domainUser.OnboardingCompleted = true;
+
+            _unitOfWork.Users.Update(domainUser);
+            await _unitOfWork.SaveChangesAsync();
+
+            return Success<string>(null, "Onboarding completed successfully.");
+        }
+        public async Task<Response<UserPreferencesDTO>> GetOnboardingAsync(Guid userId)
+        {
+            var domainUser = await _unitOfWork.Users.GetWithProfileCartAndPreferencesAsync(userId);
+            if (domainUser == null)
+                return NotFound<UserPreferencesDTO>("User not found.");
+
+            var prefs = domainUser.UserPreferences;
+            var dto = new UserPreferencesDTO
+            {
+                FavoriteColors = prefs?.FavoriteColors ?? "",
+                Interests = prefs?.Interests ?? "",
+                DesignPreference = prefs?.DesignPreference ?? ""
+            };
+
+            return Success(dto, "Preferences retrieved successfully.");
         }
     }
 }

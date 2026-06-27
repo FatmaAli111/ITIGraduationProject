@@ -95,6 +95,10 @@ public class CreateDesignCommandHandler : IRequestHandler<CreateDesignCommand, G
         var imageUrls = new List<string>();
         var writtenFiles = new List<string>();
 
+        int frontObjectsCount = 0;
+        int backObjectsCount = 0;
+        int imageObjectsCount = 0;
+
         try
         {
             // Parse canvas state to extract image sources and persist new base64 uploads
@@ -111,18 +115,22 @@ public class CreateDesignCommandHandler : IRequestHandler<CreateDesignCommand, G
                         var objectsArray = sideNode?["objects"]?.AsArray();
                         if (objectsArray == null) continue;
 
+                        if (sideName == "front") frontObjectsCount = objectsArray.Count;
+                        else if (sideName == "back") backObjectsCount = objectsArray.Count;
+
                         foreach (var obj in objectsArray)
                         {
                             if (obj == null) continue;
                             var type = obj["type"]?.ToString();
-                            if (type == "image")
+                            if (string.Equals(type, "image", StringComparison.OrdinalIgnoreCase))
                             {
+                                imageObjectsCount++;
                                 var src = obj["src"]?.ToString();
                                 if (!string.IsNullOrEmpty(src))
                                 {
                                     if (src.StartsWith("data:image/", StringComparison.OrdinalIgnoreCase))
                                     {
-                                        _logger.LogInformation("Found base64 uploaded graphic asset. Writing to disk...");
+                                        _logger.LogInformation("[DesignGraphicAssets] Found base64 uploaded graphic asset. Writing to disk...");
                                         var relativePath = await SaveBase64ImageAsync(src, userId, webRootPath);
                                         obj["src"] = relativePath;
                                         imageUrls.Add(relativePath);
@@ -141,23 +149,34 @@ public class CreateDesignCommandHandler : IRequestHandler<CreateDesignCommand, G
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Error parsing CanvasStateJSON for base64 assets.");
+                    _logger.LogError(ex, "[DesignGraphicAssets] Error parsing CanvasStateJSON for base64 assets.");
                 }
             }
+
+            _logger.LogInformation(
+                "[DesignGraphicAssets] Check 1 - CanvasStateJSON Length: {Length}, Front Objects: {FrontCount}, Back Objects: {BackCount}, Image Objects Found: {ImageCount}",
+                canvasStateJson?.Length ?? 0, frontObjectsCount, backObjectsCount, imageObjectsCount);
 
             // Resolve and link graphic assets
             var uniqueUrls = imageUrls.Distinct().ToList();
             var assetsToLink = new List<GraphicAsset>();
 
+            _logger.LogInformation(
+                "[DesignGraphicAssets] Design {DesignId}: found {ImageCount} distinct image URL(s) in CanvasStateJSON.",
+                design.Id, uniqueUrls.Count);
+
             foreach (var url in uniqueUrls)
             {
+                // Use tracking query so EF Core recognises the entity in its identity map.
                 var asset = await _unitOfWork.GraphicAssets
                     .GetTableAsTracking()
                     .FirstOrDefaultAsync(ga => ga.ImageUrl == url && ga.UserId == userId, cancellationToken);
 
-                if (asset == null)
+                bool existsInDb = asset != null;
+                if (!existsInDb)
                 {
-                    _logger.LogInformation("GraphicAssets persisted: new GraphicAsset record for URL {Url}", url);
+                    _logger.LogInformation(
+                        "[DesignGraphicAssets] Check 2 - Image url: {Url} -> NOT FOUND in DB. Creating new GraphicAsset record.", url);
                     var fileName = Path.GetFileName(url);
                     asset = new GraphicAsset
                     {
@@ -172,17 +191,33 @@ public class CreateDesignCommandHandler : IRequestHandler<CreateDesignCommand, G
                 }
                 else
                 {
-                    _logger.LogInformation("Existing GraphicAssets reused: found record for URL {Url}", url);
+                    _logger.LogInformation(
+                        "[DesignGraphicAssets] Check 2 - Image url: {Url} -> FOUND in DB. GraphicAsset ID: {AssetId}", url, asset!.Id);
                 }
 
                 assetsToLink.Add(asset);
             }
 
-            design.GraphicAssets.Clear();
-            foreach (var asset in assetsToLink)
+            _logger.LogInformation(
+                "[DesignGraphicAssets] Design {DesignId}: resolved {AssetCount} GraphicAsset(s): [{AssetIds}]",
+                design.Id,
+                assetsToLink.Count,
+                string.Join(", ", assetsToLink.Select(a => a.Id)));
+
+            // Use the repository method that correctly manages EF Core join-table rows,
+            // whether the Design is brand-new (EntityState.Added) or an existing one.
+            await _unitOfWork.Designs.SetGraphicAssetsAsync(design, assetsToLink, cancellationToken);
+
+            _logger.LogInformation(
+                "[DesignGraphicAssets] Check 3 - Design ID: {DesignId}, GraphicAssets Count: {Count} before SaveChanges.",
+                design.Id, design.GraphicAssets.Count);
+            foreach (var asset in design.GraphicAssets)
             {
-                design.GraphicAssets.Add(asset);
+                _logger.LogInformation(
+                    "[DesignGraphicAssets] Check 3 - Linked asset: ID = {AssetId}, ImageUrl = {Url}",
+                    asset.Id, asset.ImageUrl);
             }
+
 
             design.ProductId = request.ProductId;
             if (request.TemplateId.HasValue)
@@ -255,28 +290,29 @@ public class CreateDesignCommandHandler : IRequestHandler<CreateDesignCommand, G
             {
                 _logger.LogInformation("No changes detected in canvas state or customization properties. Reusing existing snapshot files.");
             }
-            // Create or update template for this design
-            var template = new Template
+
+            // Check 6 - ChangeTracker state immediately before SaveChanges
+            var changeTrackerStates = _unitOfWork.Designs.GetChangeTrackerState();
+            _logger.LogInformation(
+                "[DesignGraphicAssets] Check 6 - Tracked Entities in ChangeTracker immediately before SaveChanges (Count: {TrackerCount}):",
+                changeTrackerStates.Count);
+            foreach (var trackerState in changeTrackerStates)
             {
-                Id = Guid.NewGuid(),
-                CreatorUserId = userId,
-                Name = $"Design {DateTime.UtcNow:yyyyMMddHHmmss}",
-                PreviewImageURL = design.SnapshotImageURL,
-                IsPublic = false,
-                LikesCount = 0,
-                RemixesCount = 0,
-                AverageRating = 0,
-                ReviewCount = 0,
-                StyleTags = null
-            };
+                _logger.LogInformation("[DesignGraphicAssets] Check 6 - {TrackerState}", trackerState);
+            }
 
-            await _unitOfWork.Templates.AddAsync(template);
-
-            //// Link template to design
-            //design.TemplateId = template.Id;
-            //design.Template = template;
             await _unitOfWork.SaveChangesAsync();
-            _logger.LogInformation("Save completed: design saved successfully. Design ID {DesignId}", design.Id);
+
+            _logger.LogInformation(
+                "[DesignGraphicAssets] SaveChanges complete. Design {DesignId} saved successfully.",
+                design.Id);
+
+            // Check 7 - Query database immediately to verify SQL rows exist
+            var sqlRowsCount = await _unitOfWork.Designs.GetDesignGraphicAssetsCountAsync(design.Id, cancellationToken);
+            _logger.LogInformation(
+                "[DesignGraphicAssets] Check 7 - SQL Verification: DesignGraphicAssets table count for Design {DesignId} = {RowCount} row(s) returned from database.",
+                design.Id, sqlRowsCount);
+
         }
         catch (Exception ex)
         {
