@@ -8,6 +8,7 @@ using ITIGraduationProject.Application.Features.Shop.Commands.Models;
 using ITIGraduationProject.Application.Interfaces;
 using ITIGraduationProject.Application.Interfaces.Persistence;
 using ITIGraduationProject.Domain.Entities.ECommerce;
+using ITIGraduationProject.Domain.Entities.Designs;
 using MapsterMapper;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -64,11 +65,12 @@ namespace ITIGraduationProject.Application.Features.Shop.Commands.Handlers
 
             Guid? validDesignId = null;
             string snapshotImageUrl = string.Empty;
+            Design? design = null;
 
             // 3. Validate Design exists and belongs to the user if supplied
             if (request.DesignId.HasValue && request.DesignId.Value != Guid.Empty)
             {
-                var design = await _uow.Designs.GetByIdAsync(request.DesignId.Value);
+                design = await _uow.Designs.GetByIdAsync(request.DesignId.Value);
                 if (design == null)
                 {
                     _logger.LogWarning("Design with ID {DesignId} was not found.", request.DesignId.Value);
@@ -97,11 +99,14 @@ namespace ITIGraduationProject.Application.Features.Shop.Commands.Handlers
                 existingItem = cart.CartItems.FirstOrDefault(ci => ci.ProductId == request.ProductId && ci.DesignId == validDesignId);
             }
 
+            var calculatedPrice = design != null ? design.CalculatedPrice : product.BasePrice;
+
             if (existingItem != null)
             {
                 _logger.LogInformation("Existing cart item found. Incrementing quantity from {OldQuantity} by {AddQuantity}",
                     existingItem.Quantity, request.Quantity);
                 existingItem.Quantity += request.Quantity;
+                existingItem.UnitPrice = calculatedPrice;
             }
             else
             {
@@ -114,7 +119,7 @@ namespace ITIGraduationProject.Application.Features.Shop.Commands.Handlers
                     ProductId = request.ProductId,
                     DesignId = validDesignId,
                     Quantity = request.Quantity,
-                    UnitPrice = product.BasePrice,
+                    UnitPrice = calculatedPrice,
                     SnapshotImageUrl = snapshotImageUrl,
                     CreatedAt = DateTime.UtcNow
                 };
