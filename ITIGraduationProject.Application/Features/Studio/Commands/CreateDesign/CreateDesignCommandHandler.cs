@@ -99,6 +99,7 @@ public class CreateDesignCommandHandler : IRequestHandler<CreateDesignCommand, G
         int backObjectsCount = 0;
         int imageObjectsCount = 0;
 
+        JsonNode? rootNode = null;
         try
         {
             // Parse canvas state to extract image sources and persist new base64 uploads
@@ -106,7 +107,7 @@ public class CreateDesignCommandHandler : IRequestHandler<CreateDesignCommand, G
             {
                 try
                 {
-                    var rootNode = JsonNode.Parse(canvasStateJson);
+                    rootNode = JsonNode.Parse(canvasStateJson);
                     var sides = new[] { "front", "back" };
 
                     foreach (var sideName in sides)
@@ -218,11 +219,59 @@ public class CreateDesignCommandHandler : IRequestHandler<CreateDesignCommand, G
                     asset.Id, asset.ImageUrl);
             }
 
+            // Enrich CanvasStateJSON so each graphic image object contains graphicAssetId in top-level and inside data
+            if (rootNode != null)
+            {
+                var sides = new[] { "front", "back" };
+                foreach (var sideName in sides)
+                {
+                    var sideNode = rootNode[sideName];
+                    var objectsArray = sideNode?["objects"]?.AsArray();
+                    if (objectsArray == null) continue;
+
+                    foreach (var obj in objectsArray)
+                    {
+                        if (obj == null) continue;
+                        var type = obj["type"]?.ToString();
+                        if (string.Equals(type, "image", StringComparison.OrdinalIgnoreCase))
+                        {
+                            var src = obj["src"]?.ToString();
+                            var explicitIdStr = obj["graphicAssetId"]?.ToString() ?? obj["data"]?["graphicAssetId"]?.ToString();
+
+                            GraphicAsset? matchedAsset = null;
+                            if (!string.IsNullOrEmpty(explicitIdStr) && Guid.TryParse(explicitIdStr, out var gId))
+                            {
+                                matchedAsset = assetsToLink.FirstOrDefault(a => a.Id == gId);
+                            }
+                            if (matchedAsset == null && !string.IsNullOrEmpty(src))
+                            {
+                                matchedAsset = assetsToLink.FirstOrDefault(a => a.ImageUrl == src);
+                            }
+
+                            if (matchedAsset != null)
+                            {
+                                obj["graphicAssetId"] = matchedAsset.Id.ToString();
+                                if (obj["data"] is not JsonObject dataObj)
+                                {
+                                    dataObj = new JsonObject();
+                                    obj["data"] = dataObj;
+                                }
+                                dataObj["graphicAssetId"] = matchedAsset.Id.ToString();
+                            }
+                        }
+                    }
+                }
+                canvasStateJson = rootNode.ToJsonString();
+            }
 
             design.ProductId = request.ProductId;
-            if (request.TemplateId.HasValue)
+            if (request.TemplateId.HasValue && request.TemplateId.Value != Guid.Empty)
             {
                 design.TemplateId = request.TemplateId.Value;
+            }
+            else
+            {
+                design.TemplateId = null;
             }
             design.CanvasStateJSON = canvasStateJson;
             design.SelectedColor = request.SelectedColor;
@@ -291,21 +340,26 @@ public class CreateDesignCommandHandler : IRequestHandler<CreateDesignCommand, G
                 _logger.LogInformation("No changes detected in canvas state or customization properties. Reusing existing snapshot files.");
             }
             // Create or update template for this design
-            var template = new Template
+            var product = await _unitOfWork.Products.GetByIdAsync(request.ProductId);
+            if (product != null)
             {
-                Id = Guid.NewGuid(),
-                CreatorUserId = userId,
-                Name = $"Design {DateTime.UtcNow:yyyyMMddHHmmss}",
-                PreviewImageURL = design.SnapshotImageURL,
-                IsPublic = false,
-                LikesCount = 0,
-                RemixesCount = 0,
-                AverageRating = 0,
-                ReviewCount = 0,
-                StyleTags = null
-            };
+                var template = new Template
+                {
+                    Id = Guid.NewGuid(),
+                    CategoryId = product.CategoryId,
+                    CreatorUserId = userId,
+                    Name = $"Design {DateTime.UtcNow:yyyyMMddHHmmss}",
+                    PreviewImageURL = design.SnapshotImageURL,
+                    IsPublic = false,
+                    LikesCount = 0,
+                    RemixesCount = 0,
+                    AverageRating = 0,
+                    ReviewCount = 0,
+                    StyleTags = null
+                };
 
-            await _unitOfWork.Templates.AddAsync(template);
+                await _unitOfWork.Templates.AddAsync(template);
+            }
 
             // Check 6 - ChangeTracker state immediately before SaveChanges
             var changeTrackerStates = _unitOfWork.Designs.GetChangeTrackerState();
