@@ -1,4 +1,4 @@
-﻿using ITIGraduationProject.Application.Features.Studio.Commands.CreateGraphicAsset;
+using ITIGraduationProject.Application.Features.Studio.Commands.CreateGraphicAsset;
 using ITIGraduationProject.Application.Interfaces.IServices.AdminIServices;
 using ITIGraduationProject.Application.Interfaces.IServices.IdentityServices;
 using ITIGraduationProject.Application.Interfaces.Persistence;
@@ -33,7 +33,7 @@ namespace ITIGraduationProject.Application.Features.Studio.Queries.GetAdminGraph
                 query = query.Where(a => a.Type == request.Type.Value);
             }
 
-            var assets = await query.ToListAsync(cancellationToken);
+            var assets = await query.OrderByDescending(a => a.CreatedAt).ToListAsync(cancellationToken);
             var adminAssets = new List<GraphicAsset>();
 
             foreach (var asset in assets)

@@ -1,4 +1,4 @@
-﻿using ITIGraduationProject.Application.Features.Shop.Commands.Models;
+using ITIGraduationProject.Application.Features.Shop.Commands.Models;
 using ITIGraduationProject.Application.Interfaces.IServices.FilesServices;
 using ITIGraduationProject.Application.Interfaces.Persistence;
 using ITIGraduationProject.Domain.Entities.Products;
@@ -35,7 +35,14 @@ namespace ITIGraduationProject.Application.Features.Shop.Commands.Handlers
             string imageUrl = await _fileService.UploadFileAsync(request.ImageFile, "products");
 
             if (request.IsPrimary)
+            {
                 await ResetPrimaryImagesAsync(request.ProductId, cancellationToken);
+                var product = await _unitOfWork.Products.GetByIdAsync(request.ProductId);
+                if (product != null)
+                {
+                    product.PreviewImageURL = imageUrl;
+                }
+            }
 
             var productImage = new ProductImage
             {
