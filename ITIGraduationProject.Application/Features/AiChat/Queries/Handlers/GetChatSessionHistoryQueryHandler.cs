@@ -1,8 +1,9 @@
 ﻿using ITIGraduationProject.Application.Features.AiChat.Queries.Models;
 using ITIGraduationProject.Application.Interfaces.Persistence;
 using ITIGraduationProject.Application.Bases;
-using ITIGraduationProject.Domain.Entities.AIAndModeration;
+using ITIGraduationProject.Application.DTOS.AiChat;
 using MediatR;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using ITIGraduationProject.Application.DTOS.AiChat;

@@ -4,21 +4,21 @@ using ITIGraduationProject.Application.Features.Identitiy.Commands.Models;
 using ITIGraduationProject.Application.Interfaces.IServices.IdentityServices;
 using MediatR;
 using MapsterMapper;
-using ITIGraduationProject.Application.DTOS;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace ITIGraduationProject.Application.Features.Identitiy.Commands.Handlers
 {
-    public class CommandHandler :ResponseHandler,
+    public class CommandHandler : ResponseHandler,
         IRequestHandler<RegisterCommand, Response<string>>,
-                IRequestHandler<ConfirmEmailCommand, Response<string>>
-        ,IRequestHandler<LoginCommand, Response<LoginResponseDTO>>
-        ,IRequestHandler<RefreshTokenCommand,Response<LoginResponseDTO>>
-        , IRequestHandler<LogoutCommand, Response<string>>
-        , IRequestHandler<LogoutAllDevicesCommand, Response<string>>
-        , IRequestHandler<ForgetPasswordCommand, Response<string>>
-        , IRequestHandler<ResetPasswordCommand, Response<string>>
-        ,IRequestHandler<ExternalLoginCommand,Response<LoginResponseDTO>>
-
+        IRequestHandler<ConfirmEmailCommand, Response<string>>,
+        IRequestHandler<LoginCommand, Response<LoginResponseDTO>>,
+        IRequestHandler<RefreshTokenCommand, Response<LoginResponseDTO>>,
+        IRequestHandler<LogoutCommand, Response<string>>,
+        IRequestHandler<LogoutAllDevicesCommand, Response<string>>,
+        IRequestHandler<ForgetPasswordCommand, Response<string>>,
+        IRequestHandler<ResetPasswordCommand, Response<string>>,
+        IRequestHandler<ExternalLoginCommand, Response<LoginResponseDTO>>
     {
         private readonly IIdentityService _identityService;
         private readonly IMapper _mapper;
@@ -34,10 +34,12 @@ namespace ITIGraduationProject.Application.Features.Identitiy.Commands.Handlers
             var dto = _mapper.Map<RegisterRequestDTO>(request);
             return await _identityService.RegisterAsync(dto);
         }
+
         public async Task<Response<string>> Handle(ConfirmEmailCommand request, CancellationToken cancellationToken)
         {
             return await _identityService.ConfirmEmailAsync(request.UserId, request.Token);
         }
+
         public async Task<Response<LoginResponseDTO>> Handle(LoginCommand request, CancellationToken cancellationToken)
         {
             var dto = _mapper.Map<LoginRequestDTO>(request);
@@ -48,40 +50,30 @@ namespace ITIGraduationProject.Application.Features.Identitiy.Commands.Handlers
         {
             return await _identityService.RefreshTokenAsync(request.RefreshToken);
         }
-        public async Task<Response<string>> Handle(
-    LogoutCommand request,
-    CancellationToken cancellationToken)
+
+        public async Task<Response<string>> Handle(LogoutCommand request, CancellationToken cancellationToken)
         {
             return await _identityService.LogoutAsync(request.RefreshToken);
         }
-        public async Task<Response<string>> Handle(
-    LogoutAllDevicesCommand request,
-    CancellationToken cancellationToken)
+
+        public async Task<Response<string>> Handle(LogoutAllDevicesCommand request, CancellationToken cancellationToken)
         {
             return await _identityService.LogoutAllDevicesAsync();
         }
-        public async Task<Response<string>> Handle(
-    ForgetPasswordCommand request,
-    CancellationToken cancellationToken)
+
+        public async Task<Response<string>> Handle(ForgetPasswordCommand request, CancellationToken cancellationToken)
         {
-            return await _identityService
-                .ForgetPasswordAsync(request.Email);
+            return await _identityService.ForgetPasswordAsync(request.Email);
         }
-        public async Task<Response<string>> Handle(
-    ResetPasswordCommand request,
-    CancellationToken cancellationToken)
+
+        public async Task<Response<string>> Handle(ResetPasswordCommand request, CancellationToken cancellationToken)
         {
-            return await _identityService.ResetPasswordAsync(
-                request.Email,
-                request.Token,
-                request.NewPassword);
+            return await _identityService.ResetPasswordAsync(request.Email, request.Token, request.NewPassword);
         }
-        public async Task<Response<LoginResponseDTO>> Handle(
-    ExternalLoginCommand request,
-    CancellationToken cancellationToken)
+
+        public async Task<Response<LoginResponseDTO>> Handle(ExternalLoginCommand request, CancellationToken cancellationToken)
         {
             return await _identityService.ExternalLoginAsync();
         }
     }
-
 }

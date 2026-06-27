@@ -1,8 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using MediatR;
+using System.Security.Claims;
+using System.Threading.Tasks;
 using ITIGraduationProject.Application.Features.Profiles.Commands.Models;
 using ITIGraduationProject.Application.Features.Profiles.Queries.Models;
-
 
 namespace ITIGraduationProject.Api.Controllers
 {
@@ -10,33 +11,46 @@ namespace ITIGraduationProject.Api.Controllers
     [Route("api/[controller]")]
     public class ProfilesController : ControllerBase
     {
-        #region Mediator Injection To Send Request To Handler
-
         private readonly IMediator _mediator;
-        public ProfilesController(IMediator mediator) {
+
+        public ProfilesController(IMediator mediator)
+        {
             _mediator = mediator;
         }
-        #endregion
 
-        #region Getting Profile Data By User Id
         [HttpGet("me")]
-        public async Task<IActionResult> GetProfile([FromQuery] string userId) {
+        public async Task<IActionResult> GetProfile([FromQuery] string email)
+        {
+            var response = await _mediator.Send(new GetProfileQuery(email));
 
-            var query = new GetProfileQuery { UserId = userId };
-            var response = await _mediator.Send(query);
-            return Ok(response);
+            if (response != null && response.Succeeded)
+            {
+                return Ok(response);
+            }
+
+            return NotFound(response);
         }
-        #endregion
 
-        #region Update Profile Data By User Id
         [HttpPut("update")]
-        public async Task<IActionResult> UpdateProfile([FromForm] UpdateProfileCommand command) {
+        public async Task<IActionResult> UpdateProfile([FromForm] UpdateProfileCommand command)
+        {
+            var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(currentUserId))
+            {
+                return Unauthorized("User is not authorized or token is invalid.");
+            }
+
+            command.UserId = currentUserId;
 
             var response = await _mediator.Send(command);
+
+            if (response != null && response.Succeeded)
+            {
+                return Ok(response);
+            }
+
             return BadRequest(response);
         }
-        // used [FromForm] because using IFormFile for Uploading the Profile Image
-        #endregion
-
     }
 }

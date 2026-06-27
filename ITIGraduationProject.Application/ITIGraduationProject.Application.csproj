@@ -34,6 +34,7 @@
 
   <ItemGroup>
     <Folder Include="Features\Identitiy\Queries\" />
+    <Folder Include="Features\Profiles\Commands\Validators\" />
   </ItemGroup>
 
 </Project>

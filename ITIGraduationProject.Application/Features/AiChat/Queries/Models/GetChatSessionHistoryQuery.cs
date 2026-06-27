@@ -9,5 +9,6 @@ namespace ITIGraduationProject.Application.Features.AiChat.Queries.Models
     public class GetChatSessionHistoryQuery : IRequest<Response<ChatHistoryDto>>
     {
         public Guid SessionId { get; set; }
+        public Guid RequestingUserId { get; set; }
     }
 }
