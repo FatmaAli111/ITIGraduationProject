@@ -10,5 +10,6 @@ namespace ITIGraduationProject.Application.DTOS.CommunityDTOs
         public string UserName { get; set; } = string.Empty;
         public string? UserProfileImageUrl { get; set; }
         public DateTime CreatedAt { get; set; }
+        public bool IsOwner { get; set; }
     }
 }

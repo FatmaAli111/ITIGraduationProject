@@ -4,7 +4,9 @@ using ITIGraduationProject.Application.Features.Templates.Mapping;
 using ITIGraduationProject.Application.Features.Templates.Queries.Models;
 using ITIGraduationProject.Application.Interfaces;
 using ITIGraduationProject.Application.Interfaces.Persistence;
+using ITIGraduationProject.Application.Interfaces.Repositories;
 using ITIGraduationProject.Application.Repositories;
+using ITIGraduationProject.Domain.Entities.AIAndModeration;
 using ITIGraduationProject.Domain.Entities.Identity;
 using ITIGraduationProject.Domain.Entities.Products;
 using Mapster;
@@ -35,6 +37,11 @@ public class TemplatesQueryHandlersTests
         _currentUser = new Mock<ICurrentUserService>();
         _userId = Guid.NewGuid();
         _currentUser.Setup(x => x.UserId).Returns(_userId);
+
+        var communityInteractionsRepo = new Mock<ICommunityInteractionRepository>();
+        communityInteractionsRepo.Setup(x => x.GetTableNoTracking())
+            .Returns(new List<CommunityInteraction>().AsQueryable().BuildMock());
+        _uow.Setup(x => x.CommunityInteractions).Returns(communityInteractionsRepo.Object);
     }
 
     [Test]
@@ -65,7 +72,7 @@ public class TemplatesQueryHandlersTests
             .Returns(templates.AsQueryable().BuildMock());
         _uow.Setup(x => x.Templates).Returns(templateRepo.Object);
 
-        var handler = new GetTemplateByIdQueryHandler(_uow.Object);
+        var handler = new GetTemplateByIdQueryHandler(_uow.Object, _currentUser.Object);
         var result = await handler.Handle(new GetTemplateByIdQuery(templateId), CancellationToken.None);
 
         Assert.That(result.Succeeded, Is.True);
@@ -83,7 +90,7 @@ public class TemplatesQueryHandlersTests
             .Returns(new List<Template>().AsQueryable().BuildMock());
         _uow.Setup(x => x.Templates).Returns(templateRepo.Object);
 
-        var handler = new GetTemplateByIdQueryHandler(_uow.Object);
+        var handler = new GetTemplateByIdQueryHandler(_uow.Object, _currentUser.Object);
         var result = await handler.Handle(new GetTemplateByIdQuery(Guid.NewGuid()), CancellationToken.None);
 
         Assert.That(result.Succeeded, Is.False);

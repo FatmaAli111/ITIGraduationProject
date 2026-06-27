@@ -42,6 +42,7 @@ namespace ITIGraduationProject.Application.Features.Community.Commands.Handlers
 
             var existingLike = await _uow.CommunityInteractions
                 .GetTableAsTracking()
+                .IgnoreQueryFilters()
                 .FirstOrDefaultAsync(
                     ci => ci.UserId == _currentUser.UserId
                        && ci.TemplateId == cmd.TemplateId
@@ -50,14 +51,23 @@ namespace ITIGraduationProject.Application.Features.Community.Commands.Handlers
 
             if (existingLike is not null)
             {
-                existingLike.IsDeleted = true;
-                existingLike.DeletedAt = DateTime.UtcNow;
+                if (!existingLike.IsDeleted)
+                {
+                    existingLike.IsDeleted = true;
+                    existingLike.DeletedAt = DateTime.UtcNow;
+                    template.LikesCount = Math.Max(0, template.LikesCount - 1);
+                }
+                else
+                {
+                    existingLike.IsDeleted = false;
+                    existingLike.DeletedAt = null;
+                    template.LikesCount++;
+                }
                 _uow.CommunityInteractions.Update(existingLike);
-                template.LikesCount = Math.Max(0, template.LikesCount - 1);
                 _uow.Templates.Update(template);
                 await _uow.SaveChangesAsync();
 
-                return Success(new LikeStatusDto { Liked = false, Count = template.LikesCount });
+                return Success(new LikeStatusDto { Liked = !existingLike.IsDeleted, Count = template.LikesCount });
             }
 
             var like = new CommunityInteraction

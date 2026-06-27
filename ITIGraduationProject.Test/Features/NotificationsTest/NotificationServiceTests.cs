@@ -1,4 +1,4 @@
-﻿using ITIGraduationProject.Application.Interfaces.IServices.Notification;
+using ITIGraduationProject.Application.Interfaces.IServices.Notification;
 using ITIGraduationProject.Application.Interfaces.Persistence;
 using ITIGraduationProject.Application.Repositories;
 using ITIGraduationProject.Domain.Entities.AIAndModeration;
@@ -200,8 +200,12 @@ namespace ITIGraduationProject.Test.Features.NotificationsTest
             _notificationSender.Verify(
                 x => x.SendToUserAsync(
                     It.IsAny<Guid>(),
+                    It.IsAny<Guid>(),
                     It.IsAny<string>(),
-                    It.IsAny<string>()),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<bool>(),
+                    It.IsAny<DateTime>()),
                 Times.Once);
         }
 

@@ -55,6 +55,7 @@ namespace ITIGraduationProject.Application.Features.Community.Commands.Handlers
                 comment.User = user;
 
             var dto = comment.Adapt<CommentDto>();
+            dto.IsOwner = true;
 
             if (template.CreatorUserId != _currentUser.UserId)
             {

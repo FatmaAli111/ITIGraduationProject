@@ -16,5 +16,7 @@ namespace ITIGraduationProject.Application.DTOS.CommunityDTOs
         public string CreatorName { get; set; } = string.Empty;
         public string? CreatorProfileImageUrl { get; set; }
         public DateTime CreatedAt { get; set; }
+        public bool LikedByCurrentUser { get; set; }
+        public bool SavedByCurrentUser { get; set; }
     }
 }

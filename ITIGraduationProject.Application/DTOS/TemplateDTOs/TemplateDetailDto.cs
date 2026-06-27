@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -23,5 +23,8 @@ namespace ITIGraduationProject.Application.DTOS.TemplateDTOs
         public string CreatorName { get; set; } = string.Empty;
         public string CanvasStateJSON { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
+        public bool LikedByCurrentUser { get; set; }
+        public bool SavedByCurrentUser { get; set; }
+        public int CommentCount { get; set; }
     }
 }

@@ -32,6 +32,7 @@ namespace ITIGraduationProject.Application.Features.Community.Commands.Handlers
 
             var existingSave = await _uow.CommunityInteractions
                 .GetTableAsTracking()
+                .IgnoreQueryFilters()
                 .FirstOrDefaultAsync(
                     ci => ci.UserId == _currentUser.UserId
                        && ci.TemplateId == cmd.TemplateId
@@ -40,12 +41,20 @@ namespace ITIGraduationProject.Application.Features.Community.Commands.Handlers
 
             if (existingSave is not null)
             {
-                existingSave.IsDeleted = true;
-                existingSave.DeletedAt = DateTime.UtcNow;
+                if (!existingSave.IsDeleted)
+                {
+                    existingSave.IsDeleted = true;
+                    existingSave.DeletedAt = DateTime.UtcNow;
+                }
+                else
+                {
+                    existingSave.IsDeleted = false;
+                    existingSave.DeletedAt = null;
+                }
                 _uow.CommunityInteractions.Update(existingSave);
                 await _uow.SaveChangesAsync();
 
-                return Success(new SaveStatusDto { Saved = false });
+                return Success(new SaveStatusDto { Saved = !existingSave.IsDeleted });
             }
 
             var save = new CommunityInteraction

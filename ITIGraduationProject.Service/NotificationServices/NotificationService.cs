@@ -1,4 +1,4 @@
-﻿using ITIGraduationProject.Application.Bases;
+using ITIGraduationProject.Application.Bases;
 using ITIGraduationProject.Application.DTOS.Notification;
 using ITIGraduationProject.Application.Interfaces.IServices.Notification;
 using ITIGraduationProject.Application.Interfaces.Persistence;
@@ -126,8 +126,12 @@ namespace ITIGraduationProject.Service.NotificationServices
 
             await _notificationSender.SendToUserAsync(
                 userId,
+                notification.Id,
                 title,
-                message);
+                message,
+                type.ToString(),
+                notification.IsRead,
+                notification.CreatedAt);
 
 
             return Success(true);

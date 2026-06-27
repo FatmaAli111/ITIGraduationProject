@@ -1,4 +1,5 @@
-﻿using ITIGraduationProject.Application.DTOS.CommunityDTOs;
+using ITIGraduationProject.Application.Interfaces;
+using ITIGraduationProject.Application.DTOS.CommunityDTOs;
 using ITIGraduationProject.Application.Features.Community.Queries.Handlers;
 using ITIGraduationProject.Application.Features.Community.Queries.Models;
 using ITIGraduationProject.Application.Interfaces.Persistence;
@@ -19,6 +20,7 @@ namespace ITIGraduationProject.Test.Features.Community;
 public class CommunityQueryHandlersTests
 {
     private Mock<IUnitOfWork> _uow = null!;
+    private Mock<ICurrentUserService> _currentUser = null!;
 
     private GetCommunityFeedQueryHandler _feedHandler = null!;
     private GetTopCreatorsQueryHandler _topCreatorsHandler = null!;
@@ -41,11 +43,17 @@ public class CommunityQueryHandlersTests
     public void Setup()
     {
         _uow = new Mock<IUnitOfWork>();
+        _currentUser = new Mock<ICurrentUserService>();
 
-        _feedHandler = new GetCommunityFeedQueryHandler(_uow.Object);
+        var communityInteractionsRepo = new Mock<ICommunityInteractionRepository>();
+        communityInteractionsRepo.Setup(x => x.GetTableNoTracking())
+            .Returns(new List<CommunityInteraction>().AsQueryable().BuildMock());
+        _uow.Setup(x => x.CommunityInteractions).Returns(communityInteractionsRepo.Object);
+
+        _feedHandler = new GetCommunityFeedQueryHandler(_uow.Object, _currentUser.Object);
         _topCreatorsHandler = new GetTopCreatorsQueryHandler(_uow.Object);
         _reportsHandler = new GetModerationReportsQueryHandler(_uow.Object);
-        _commentsHandler = new GetTemplateCommentsQueryHandler(_uow.Object);
+        _commentsHandler = new GetTemplateCommentsQueryHandler(_uow.Object, _currentUser.Object);
     }
 
     [Test]

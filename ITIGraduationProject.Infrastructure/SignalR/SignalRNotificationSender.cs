@@ -1,4 +1,4 @@
-﻿using ITIGraduationProject.Application.Interfaces.IServices.Notification;
+using ITIGraduationProject.Application.Interfaces.IServices.Notification;
 using Microsoft.AspNetCore.SignalR;
 using System;
 using System.Collections.Generic;
@@ -21,8 +21,12 @@ namespace ITIGraduationProject.Infrastructure.SignalR
 
         public async Task SendToUserAsync(
             Guid userId,
+            Guid notificationId,
             string title,
-            string message)
+            string message,
+            string type,
+            bool isRead,
+            DateTime createdAt)
         {
             await _hubContext
                 .Clients
@@ -31,8 +35,12 @@ namespace ITIGraduationProject.Infrastructure.SignalR
                     "ReceiveNotification",
                     new
                     {
+                        Id = notificationId,
                         Title = title,
-                        Message = message
+                        Message = message,
+                        Type = type,
+                        IsRead = isRead,
+                        CreatedAt = createdAt
                     });
         }
     }

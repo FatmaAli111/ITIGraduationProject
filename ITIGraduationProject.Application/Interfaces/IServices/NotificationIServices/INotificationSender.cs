@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,7 +10,11 @@ namespace ITIGraduationProject.Application.Interfaces.IServices.Notification
     {
         Task SendToUserAsync(
             Guid userId,
+            Guid notificationId,
             string title,
-            string message);
+            string message,
+            string type,
+            bool isRead,
+            DateTime createdAt);
     }
 }
