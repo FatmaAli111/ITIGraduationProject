@@ -37,6 +37,7 @@ namespace ITIGraduationProject.Service.NotificationServices
 
         public async Task<Response<List<NotificationDto>>> GetUnreadNotificationsAsync(Guid userId)
         {
+            Console.WriteLine($"Current UserId = {userId}");
             var notifications =
                 await _unitOfWork.Notifications
                 .GetUnreadByUserAsync(userId);

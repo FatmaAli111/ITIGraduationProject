@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
@@ -30,7 +30,7 @@ namespace ITIGraduationProject.Infrastructure.Identity
             await SeedRolesAsync(roleManager, logger);
             await SeedAdminAsync(userManager, context, configuration, logger);
             await SeedPrinterAsync(userManager, context, configuration, logger);
-
+            await SeedCommunityUserAsync(userManager, context, configuration, logger);
             await ApplicationSeeder.SeedAsync(scope.ServiceProvider);
         }
 
@@ -73,6 +73,8 @@ namespace ITIGraduationProject.Infrastructure.Identity
                 {
                     Id = newId,
                     Name = name,
+                    Email = email,
+                    UserName = email,
                     IsActive = true,
                     CurrentPointsBalance = 0,
                     UserPreferences = new UserPreferences(),
@@ -124,6 +126,8 @@ namespace ITIGraduationProject.Infrastructure.Identity
                 {
                     Id = applicationUser.Id,
                     Name = name,
+                    Email = email,
+                    UserName = email,
                     IsActive = true,
                     CurrentPointsBalance = 0,
                     UserPreferences = new UserPreferences(),
@@ -163,6 +167,8 @@ namespace ITIGraduationProject.Infrastructure.Identity
                 {
                     Id = newId,
                     Name = name,
+                    Email = email,
+                    UserName = email,
                     IsActive = true,
                     CurrentPointsBalance = 0,
                     UserPreferences = new UserPreferences(),
@@ -217,6 +223,8 @@ namespace ITIGraduationProject.Infrastructure.Identity
                 {
                     Id = applicationUser.Id,
                     Name = name,
+                    Email = email,
+                    UserName = email,
                     IsActive = true,
                     CurrentPointsBalance = 0,
                     UserPreferences = new UserPreferences(),
@@ -227,6 +235,91 @@ namespace ITIGraduationProject.Infrastructure.Identity
                 await context.SaveChangesAsync();
 
                 logger.LogInformation("Domain User created for printer '{Email}'.", email);
+            }
+
+        }
+        private static async Task SeedCommunityUserAsync(
+    UserManager<ApplicationUser> userManager,
+    AppDbContext context,
+    IConfiguration configuration,
+    ILogger logger)
+        {
+            var email = configuration["CommunitySeed:Email"];
+            var password = configuration["CommunitySeed:Password"];
+            var name = configuration["CommunitySeed:Name"] ?? "Fatma Ali";
+
+            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+            {
+                logger.LogWarning("CommunitySeed configuration is missing.");
+                return;
+            }
+
+            var applicationUser = await userManager.FindByEmailAsync(email);
+
+            if (applicationUser == null)
+            {
+                var id = Guid.NewGuid();
+
+                var domainUser = new User
+                {
+                    Id = id,
+                    Name = name,
+                    Email = email,
+                    UserName = email,
+                    IsActive = true,
+                    CurrentPointsBalance = 0,
+                    UserPreferences = new UserPreferences(),
+                    Cart = new Cart()
+                };
+
+                context.AppUsers.Add(domainUser);
+                await context.SaveChangesAsync();
+
+                applicationUser = new ApplicationUser
+                {
+                    Id = id,
+                    Email = email,
+                    UserName = email,
+                    EmailConfirmed = true
+                };
+
+                var result = await userManager.CreateAsync(applicationUser, password);
+
+                if (!result.Succeeded)
+                {
+                    context.AppUsers.Remove(domainUser);
+                    await context.SaveChangesAsync();
+
+                    logger.LogError(
+                        "Failed to create community user: {Errors}",
+                        string.Join(", ", result.Errors.Select(e => e.Description)));
+
+                    return;
+                }
+
+                logger.LogInformation("Community user created.");
+            }
+
+            if (!await userManager.IsInRoleAsync(applicationUser, Roles.User))
+            {
+                await userManager.AddToRoleAsync(applicationUser, Roles.User);
+            }
+
+            if (!await context.AppUsers.AnyAsync(x => x.Id == applicationUser.Id))
+            {
+                context.AppUsers.Add(new User
+                {
+                    Id = applicationUser.Id,
+                    Name = name,
+                    Email = applicationUser.Email,
+                    UserName = applicationUser.UserName,
+                    IsActive = true,
+                    CurrentPointsBalance = 0,
+                    UserPreferences = new UserPreferences(),
+                    Cart = new Cart()
+                });
+
+                await context.SaveChangesAsync();
             }
         }
     }

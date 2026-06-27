@@ -35,10 +35,10 @@ public static class ApplicationSeeder
             return;
         }
 
-        var creatorId = await context.AppUsers
-            .Select(u => u.Id)
-            .FirstOrDefaultAsync();
-
+        var creatorId = await context.Users
+     .Where(x => x.Email == "FatmaAli@gmail.com")
+     .Select(x => x.Id)
+     .FirstOrDefaultAsync();
         if (creatorId == Guid.Empty)
         {
             logger.LogWarning("No existing users found. Skipping template seeding.");
