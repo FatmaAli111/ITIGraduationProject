@@ -108,6 +108,9 @@ public class ProfilesQueryHandlersTests
         _usersRepo.Setup(x => x.GetWithProfileCartAndPreferencesAsync(userId))
             .ReturnsAsync(user);
 
+        _usersRepo.Setup(x => x.GetTableNoTracking())
+            .Returns(new List<User> { user }.AsQueryable().BuildMock());
+
         _ordersRepo.Setup(x => x.GetTableNoTracking())
             .Returns(orders.AsQueryable().BuildMock());
 
@@ -115,7 +118,7 @@ public class ProfilesQueryHandlersTests
             .Returns(templates.AsQueryable().BuildMock());
 
         var result = await _handler.Handle(
-            new GetProfileQuery { UserId = userId.ToString() },
+            new GetProfileQuery(user.Email),
             CancellationToken.None);
 
         Assert.That(result.Succeeded, Is.True);
@@ -136,13 +139,13 @@ public class ProfilesQueryHandlersTests
     [Test]
     public async Task GetProfile_Should_Return_NotFound_When_User_NotFound()
     {
-        var userId = Guid.NewGuid();
+        const string email = "missing@test.com";
 
-        _usersRepo.Setup(x => x.GetWithProfileCartAndPreferencesAsync(userId))
-            .ReturnsAsync((User?)null);
+        _usersRepo.Setup(x => x.GetTableNoTracking())
+            .Returns(new List<User>().AsQueryable().BuildMock());
 
         var result = await _handler.Handle(
-            new GetProfileQuery { UserId = userId.ToString() },
+            new GetProfileQuery(email),
             CancellationToken.None);
 
         Assert.That(result.Succeeded, Is.False);
@@ -165,6 +168,9 @@ public class ProfilesQueryHandlersTests
         _usersRepo.Setup(x => x.GetWithProfileCartAndPreferencesAsync(userId))
             .ReturnsAsync(user);
 
+        _usersRepo.Setup(x => x.GetTableNoTracking())
+            .Returns(new List<User> { user }.AsQueryable().BuildMock());
+
         _ordersRepo.Setup(x => x.GetTableNoTracking())
             .Returns(new List<Order>().AsQueryable().BuildMock());
 
@@ -172,7 +178,7 @@ public class ProfilesQueryHandlersTests
             .Returns(new List<Template>().AsQueryable().BuildMock());
 
         var result = await _handler.Handle(
-            new GetProfileQuery { UserId = userId.ToString() },
+            new GetProfileQuery(user.Email),
             CancellationToken.None);
 
         Assert.That(result.Succeeded, Is.True);
