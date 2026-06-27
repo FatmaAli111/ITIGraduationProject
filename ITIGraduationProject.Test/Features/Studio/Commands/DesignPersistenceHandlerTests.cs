@@ -7,6 +7,7 @@ using ITIGraduationProject.Application.Interfaces.Persistence;
 using ITIGraduationProject.Application.Interfaces.Repositories;
 using ITIGraduationProject.Application.Repositories;
 using ITIGraduationProject.Domain.Entities.Designs;
+using ITIGraduationProject.Domain.Entities.Products;
 using ITIGraduationProject.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Hosting;
@@ -128,13 +129,18 @@ public class DesignPersistenceHandlerTests
         {
             Designs = new FakeDesignRepository();
             GraphicAssets = new FakeGraphicAssetRepository();
+
+            var templateRepo = new Mock<ITemplateRepository>();
+            templateRepo.Setup(x => x.AddAsync(It.IsAny<Template>()))
+                .ReturnsAsync((Template t) => t);
+            Templates = templateRepo.Object;
         }
 
         public IProductRepository Products => throw new NotImplementedException();
         public IDesignRepository Designs { get; }
         public IOrderRepository Orders => throw new NotImplementedException();
         public IUserRepository Users => throw new NotImplementedException();
-        public ITemplateRepository Templates => throw new NotImplementedException();
+        public ITemplateRepository Templates { get; }
         public ICouponRepository Coupons => throw new NotImplementedException();
         public IModerationReportRepository ModerationReports => throw new NotImplementedException();
         public IAiChatSessionRepository AiChatSessions => throw new NotImplementedException();
