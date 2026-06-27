@@ -124,8 +124,8 @@ namespace ITIGraduationProject.Service.Admin
 
             return Success<string>(applicationUser.Id.ToString(), "Invitation sent successfully.");
         }
-            var invitationLink =
-               $"{_configuration.GetSection("ClientSettings:ClientBaseUrl").Value}/reset-password?email={applicationUser.Email}&token={encodedToken}";
+        //var invitationLink =
+        //   $"{_configuration.GetSection("ClientSettings:ClientBaseUrl").Value}/reset-password?email={applicationUser.Email}&token={encodedToken}";
 
         public async Task<Response<string>> ResendInvitationAsync(Guid id)
         {
@@ -295,7 +295,7 @@ namespace ITIGraduationProject.Service.Admin
 
             var token = await _userManager.GeneratePasswordResetTokenAsync(applicationUser);
             var encodedToken = WebUtility.UrlEncode(token);
-            var invitationLink = $"{clientBaseUrl}/accept-invitation?userId={applicationUser.Id}&token={encodedToken}";
+            var invitationLink = $"{clientBaseUrl}/reset-password?email={applicationUser.Email}&token={encodedToken}";
             var body = $"<h3>You've been invited as {role}!</h3>" +
                        $"<p>Click <a href='{invitationLink}'>here</a> to set your password and activate your account.</p>";
 
