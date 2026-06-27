@@ -22,7 +22,7 @@ public class Template : BaseAuditableEntity
     public int RemixesCount { get; set; }
     public decimal AverageRating { get; set; }
     public int ReviewCount { get; set; }
-
+    public string CanvasStateJSON { get; set; } = string.Empty;
     public Category Category { get; set; } = null!;
     public User CreatorUser { get; set; } = null!;
     public ICollection<Design> Designs { get; set; } = new HashSet<Design>();

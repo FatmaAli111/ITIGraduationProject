@@ -30,6 +30,8 @@ namespace ITIGraduationProject.Infrastructure.Identity
             await SeedRolesAsync(roleManager, logger);
             await SeedAdminAsync(userManager, context, configuration, logger);
             await SeedPrinterAsync(userManager, context, configuration, logger);
+
+            await ApplicationSeeder.SeedAsync(scope.ServiceProvider);
         }
 
         private static async Task SeedRolesAsync(RoleManager<IdentityRole<Guid>> roleManager, ILogger logger)

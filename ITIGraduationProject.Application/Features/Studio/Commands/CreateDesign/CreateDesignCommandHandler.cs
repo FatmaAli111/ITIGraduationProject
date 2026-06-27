@@ -348,16 +348,22 @@ public class CreateDesignCommandHandler : IRequestHandler<CreateDesignCommand, G
                     Id = Guid.NewGuid(),
                     CategoryId = product.CategoryId,
                     CreatorUserId = userId,
+
                     Name = $"Design {DateTime.UtcNow:yyyyMMddHHmmss}",
+
                     PreviewImageURL = design.SnapshotImageURL,
+
+                    CanvasStateJSON = design.CanvasStateJSON,   
+
                     IsPublic = false,
+
                     LikesCount = 0,
                     RemixesCount = 0,
                     AverageRating = 0,
                     ReviewCount = 0,
+
                     StyleTags = null
                 };
-
                 await _unitOfWork.Templates.AddAsync(template);
             }
 

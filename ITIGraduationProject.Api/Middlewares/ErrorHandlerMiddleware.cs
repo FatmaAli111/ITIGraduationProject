@@ -1,9 +1,10 @@
-﻿using ITIGraduationProject.Application.Bases;
+﻿using FluentValidation;
+using ITIGraduationProject.Application.Bases;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+//using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Net;
 using System.Text;

@@ -21,6 +21,7 @@ namespace ITIGraduationProject.Application.DTOS.TemplateDTOs
         public string CategoryName { get; set; } = string.Empty;
         public Guid CreatorUserId { get; set; }
         public string CreatorName { get; set; } = string.Empty;
+        public string CanvasStateJSON { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
     }
 }
