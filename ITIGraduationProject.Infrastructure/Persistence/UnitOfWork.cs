@@ -43,6 +43,16 @@ namespace ITIGraduationProject.Infrastructure.Persistence
         _orderItems ??= new OrderItemRepository(_context);
         private IOrderItemRepository? _orderItems;
 
+        public ICartRepository Carts =>
+        _carts ??= new CartRepository(_context);
+        private ICartRepository? _carts;
+
+        public ICartItemRepository CartItems =>
+        _cartItems ??= new CartItemRepository(_context);
+        private ICartItemRepository? _cartItems;
+
+
+
         public UnitOfWork(
             AppDbContext context,
             IProductRepository products,

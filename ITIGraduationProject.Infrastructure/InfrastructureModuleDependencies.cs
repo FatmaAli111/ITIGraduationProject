@@ -1,4 +1,4 @@
-﻿using ITIGraduationProject.Application.Interfaces;
+using ITIGraduationProject.Application.Interfaces;
 using ITIGraduationProject.Application.Interfaces.IRepositories;
 using ITIGraduationProject.Application.Interfaces.IServices.Notification;
 using ITIGraduationProject.Application.Interfaces.IServices.StudioServices;
@@ -142,6 +142,10 @@ namespace ITIGraduationProject.Infrastructure
             services.AddScoped<IPaymentService, StripePaymentService>();
             services.AddScoped<IProductImageRepository, ProductImageRepository>();
             services.AddScoped<IAiChatMessageRepository, AiChatMessageRepository>();
+            services.AddScoped<ICartRepository, CartRepository>();
+            services.AddScoped<ICartItemRepository, CartItemRepository>();
         }
     }
 }
+
+

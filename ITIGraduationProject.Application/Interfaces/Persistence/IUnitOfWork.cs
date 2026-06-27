@@ -27,7 +27,12 @@ namespace ITIGraduationProject.Application.Interfaces.Persistence
         IPrinterProfileRepository PrinterProfiles { get; }
         IAiChatMessageRepository AiChatMessages { get; }
         IOrderItemRepository OrderItems { get; }
+        ICartRepository Carts => throw new System.NotImplementedException();
+        ICartItemRepository CartItems => throw new System.NotImplementedException();
 
         Task<int> SaveChangesAsync();
     }
 }
+
+
+
