@@ -58,6 +58,8 @@ namespace ITIGraduationProject.Service.Identity.Authantication
             {
                 Id = newId,
                 Name = request.Name,
+                Email = request.Email,       
+                UserName = request.Email,
                 IsActive = false,
                 CurrentPointsBalance = 0,
                 UserPreferences = new UserPreferences(),
@@ -378,6 +380,8 @@ namespace ITIGraduationProject.Service.Identity.Authantication
                 {
                     Id = newId,
                     Name = name ?? email.Split('@')[0],
+                    Email = email,               
+                    UserName = email,
                     IsActive = true,
                     CurrentPointsBalance = 0,
                     UserPreferences = new UserPreferences(),
