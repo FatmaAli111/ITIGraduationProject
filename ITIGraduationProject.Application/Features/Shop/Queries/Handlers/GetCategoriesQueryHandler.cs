@@ -24,12 +24,10 @@ namespace ITIGraduationProject.Application.Features.Shop.Queries.Handlers
         public async Task<Response<List<CategoryDto>>> Handle(
             GetCategoriesQuery request, CancellationToken ct)
         {
-            var categories = await _uow.Products
+            var categories = await _uow.Categories
                 .GetTableNoTracking()
-                .Include(p => p.Category)
-                .Where(p => !p.IsDeleted)
-                .Select(p => p.Category)
-                .Distinct()
+                .Where(category => !category.IsDeleted)
+                .OrderBy(category => category.Name)
                 .ProjectToType<CategoryDto>()
                 .ToListAsync(ct);
 

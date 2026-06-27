@@ -532,5 +532,64 @@ namespace ITIGraduationProject.Test.Features.Community
 
         #endregion
 
+        #region Moderation
+
+        [Test]
+        public async Task UpdateModerationStatus_Should_Persist_Reviewed_Status()
+        {
+            var report = new ModerationReport
+            {
+                Id = Guid.NewGuid(),
+                TargetTemplateId = Guid.NewGuid(),
+                Status = ModerationReportStatus.Pending
+            };
+            var repository = new Mock<IModerationReportRepository>();
+
+            repository.Setup(x => x.GetByIdAsync(report.Id)).ReturnsAsync(report);
+            _uow.Setup(x => x.ModerationReports).Returns(repository.Object);
+            _uow.Setup(x => x.Templates.GetByIdAsync(report.TargetTemplateId))
+                .ReturnsAsync((Template?)null);
+            _uow.Setup(x => x.SaveChangesAsync()).ReturnsAsync(1);
+
+            var result = await _resolveHandler.Handle(
+                new ResolveModerationReportCommand(
+                    report.Id,
+                    null,
+                    ModerationReportStatus.Reviewed),
+                CancellationToken.None);
+
+            Assert.That(result.Succeeded, Is.True);
+            Assert.That(report.Status, Is.EqualTo(ModerationReportStatus.Reviewed));
+            Assert.That(report.ResolvedAt, Is.Null);
+            repository.Verify(x => x.Update(report), Times.Once);
+            _uow.Verify(x => x.SaveChangesAsync(), Times.Once);
+        }
+
+        [Test]
+        public async Task ResolveModerationReport_Should_Require_Action_Description()
+        {
+            var report = new ModerationReport
+            {
+                Id = Guid.NewGuid(),
+                Status = ModerationReportStatus.Pending
+            };
+
+            _uow.Setup(x => x.ModerationReports.GetByIdAsync(report.Id))
+                .ReturnsAsync(report);
+
+            var result = await _resolveHandler.Handle(
+                new ResolveModerationReportCommand(
+                    report.Id,
+                    " ",
+                    ModerationReportStatus.ActionTaken),
+                CancellationToken.None);
+
+            Assert.That(result.Succeeded, Is.False);
+            Assert.That(result.Message, Does.Contain("Action taken is required"));
+            _uow.Verify(x => x.SaveChangesAsync(), Times.Never);
+        }
+
+        #endregion
+
     }
 }

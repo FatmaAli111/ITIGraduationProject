@@ -41,6 +41,13 @@ namespace ITIGraduationProject.Api.Admin
                 return StatusCode((int)result.StatusCode, result);
             }
 
+            [HttpPost("{id}/resend-invitation")]
+            public async Task<IActionResult> ResendInvitation(Guid id)
+            {
+                var result = await _mediator.Send(new ResendInvitationCommand { Id = id });
+                return StatusCode((int)result.StatusCode, result);
+            }
+
             [HttpPut("{id}")]
             public async Task<IActionResult> UpdateUser(Guid id, UpdateUserCommand command)
             {

@@ -2,6 +2,7 @@
 using ITIGraduationProject.Application.Interfaces.IServices.IdentityServices;
 using ITIGraduationProject.Application.Interfaces.Persistence;
 using ITIGraduationProject.Application.Interfaces.Repositories;
+using ITIGraduationProject.Application.Repositories;
 using ITIGraduationProject.Domain.Entities.Identity;
 using ITIGraduationProject.Infrastructure.Identity;
 using ITIGraduationProject.Service.Identity.Authantication;
@@ -99,6 +100,38 @@ namespace ITIGraduationProject.Test.Features.Identity
 
             Assert.That(result.Succeeded, Is.False);
             Assert.That(result.Message, Is.EqualTo("Email already exists."));
+        }
+
+        [Test]
+        public async Task AcceptInvitationAsync_Should_Set_Password_Confirm_Email_And_Activate_User()
+        {
+            var userId = Guid.NewGuid();
+            var applicationUser = new ApplicationUser
+            {
+                Id = userId,
+                Email = "invited@test.com",
+                EmailConfirmed = false
+            };
+            var domainUser = new User { Id = userId, IsActive = false };
+            var userRepository = new Mock<IUserRepository>();
+
+            _userManager
+                .Setup(x => x.FindByIdAsync(userId.ToString()))
+                .ReturnsAsync(applicationUser);
+            _userManager
+                .Setup(x => x.ResetPasswordAsync(applicationUser, "token", "NewPassword1!"))
+                .ReturnsAsync(IdentityResult.Success);
+            userRepository.Setup(x => x.GetByIdAsync(userId)).ReturnsAsync(domainUser);
+            _unitOfWork.Setup(x => x.Users).Returns(userRepository.Object);
+            _unitOfWork.Setup(x => x.SaveChangesAsync()).ReturnsAsync(1);
+
+            var result = await _service.AcceptInvitationAsync(userId, "token", "NewPassword1!");
+
+            Assert.That(result.Succeeded, Is.True);
+            Assert.That(applicationUser.EmailConfirmed, Is.True);
+            Assert.That(domainUser.IsActive, Is.True);
+            userRepository.Verify(x => x.Update(domainUser), Times.Once);
+            _unitOfWork.Verify(x => x.SaveChangesAsync(), Times.Once);
         }
 
         [Test]

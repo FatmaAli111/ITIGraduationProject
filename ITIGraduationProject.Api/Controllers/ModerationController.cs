@@ -4,6 +4,8 @@ using ITIGraduationProject.Domain.Constants;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json.Serialization;
+using ITIGraduationProject.Domain.Enums;
 
 namespace ITIGraduationProject.Api.Controllers
 {
@@ -22,8 +24,15 @@ namespace ITIGraduationProject.Api.Controllers
 
         [HttpPatch("reports/{id:guid}")]
         public async Task<IActionResult> ResolveReport(Guid id, [FromBody] ResolveReportRequest body)
-            => Ok(await _mediator.Send(new ResolveModerationReportCommand(id, body.ActionTaken)));
+        {
+            var result = await _mediator.Send(
+                new ResolveModerationReportCommand(id, body.ActionTaken, body.Status));
+            return StatusCode((int)result.StatusCode, result);
+        }
     }
 
-    public record ResolveReportRequest(string ActionTaken);
+    public record ResolveReportRequest(
+        string? ActionTaken,
+        [property: JsonConverter(typeof(JsonStringEnumConverter))]
+        ModerationReportStatus? Status = null);
 }

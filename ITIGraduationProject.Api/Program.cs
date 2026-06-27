@@ -109,21 +109,6 @@ namespace ITIGraduationProject.Api
             // Configure the HTTP request pipeline.
             app.UseMiddleware<ErrorHandlerMiddleware>();
 
-            app.Use(async (context, next) =>
-            {
-                context.Response.Headers["Access-Control-Allow-Origin"] = "http://localhost:4200";
-                context.Response.Headers["Access-Control-Allow-Headers"] = "*";
-                context.Response.Headers["Access-Control-Allow-Methods"] = "GET,POST,PUT,DELETE,OPTIONS";
-
-                if (context.Request.Method.Equals(HttpMethods.Options, StringComparison.OrdinalIgnoreCase))
-                {
-                    context.Response.StatusCode = StatusCodes.Status204NoContent;
-                    return;
-                }
-
-                await next();
-            });
-
             app.UseHttpsRedirection();
             app.UseCors("AllowFrontend");
 

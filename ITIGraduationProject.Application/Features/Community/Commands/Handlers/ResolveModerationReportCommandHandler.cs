@@ -33,9 +33,19 @@ namespace ITIGraduationProject.Application.Features.Community.Commands.Handlers
             if (report is null || report.IsDeleted)
                 return NotFound<string>("Report not found");
 
-            report.ActionTaken = cmd.ActionTaken;
-            report.Status = ModerationReportStatus.ActionTaken;
-            report.ResolvedAt = DateTime.UtcNow;
+            var nextStatus = cmd.Status ?? ModerationReportStatus.ActionTaken;
+            var actionTaken = cmd.ActionTaken?.Trim();
+
+            if (nextStatus == ModerationReportStatus.ActionTaken && string.IsNullOrWhiteSpace(actionTaken))
+                return BadRequest<string>("Action taken is required when resolving a report.");
+
+            if (!string.IsNullOrWhiteSpace(actionTaken))
+                report.ActionTaken = actionTaken;
+
+            report.Status = nextStatus;
+            report.ResolvedAt = nextStatus is ModerationReportStatus.ActionTaken or ModerationReportStatus.Dismissed
+                ? DateTime.UtcNow
+                : null;
 
             _uow.ModerationReports.Update(report);
             await _uow.SaveChangesAsync();
@@ -48,11 +58,22 @@ namespace ITIGraduationProject.Application.Features.Community.Commands.Handlers
                     _logger,
                     template.CreatorUserId,
                     "Moderation update",
-                    $"Action taken on your template \"{template.Name}\": {cmd.ActionTaken}.",
+                    BuildNotificationMessage(template.Name, nextStatus, actionTaken),
                     NotificationType.ModerationUpdate);
             }
 
-            return Success("Report resolved successfully");
+            return Success("Report status updated successfully");
+        }
+
+        private static string BuildNotificationMessage(
+            string templateName,
+            ModerationReportStatus status,
+            string? actionTaken)
+        {
+            if (!string.IsNullOrWhiteSpace(actionTaken))
+                return $"Moderation status for your template \"{templateName}\" changed to {status}: {actionTaken}.";
+
+            return $"Moderation status for your template \"{templateName}\" changed to {status}.";
         }
     }
 }

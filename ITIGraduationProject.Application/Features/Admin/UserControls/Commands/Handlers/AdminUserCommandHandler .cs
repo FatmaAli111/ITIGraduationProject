@@ -14,6 +14,7 @@ namespace ITIGraduationProject.Application.Features.Admin.UserControls.Commands.
 {
     public class AdminUserCommandHandler :
          IRequestHandler<InviteUserCommand, Response<string>>,
+         IRequestHandler<ResendInvitationCommand, Response<string>>,
          IRequestHandler<UpdateUserCommand, Response<string>>,
          IRequestHandler<ChangeUserStatusCommand, Response<string>>,
          IRequestHandler<ChangeUserRoleCommand, Response<string>>
@@ -31,6 +32,11 @@ namespace ITIGraduationProject.Application.Features.Admin.UserControls.Commands.
         {
             var dto = _mapper.Map<InviteUserRequestDTO>(request);
             return await _adminUserService.InviteUserAsync(dto);
+        }
+
+        public async Task<Response<string>> Handle(ResendInvitationCommand request, CancellationToken cancellationToken)
+        {
+            return await _adminUserService.ResendInvitationAsync(request.Id);
         }
 
         public async Task<Response<string>> Handle(UpdateUserCommand request, CancellationToken cancellationToken)

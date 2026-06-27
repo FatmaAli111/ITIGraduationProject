@@ -614,7 +614,13 @@ namespace ITIGraduationProject.Infrastructure.Migrations
                     b.Property<Guid>("CartId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("DesignId")
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("DesignId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ProductId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("Quantity")
@@ -635,6 +641,8 @@ namespace ITIGraduationProject.Infrastructure.Migrations
                     b.HasIndex("CartId");
 
                     b.HasIndex("DesignId");
+
+                    b.HasIndex("ProductId");
 
                     b.ToTable("CartItems", (string)null);
                 });
@@ -1717,12 +1725,19 @@ namespace ITIGraduationProject.Infrastructure.Migrations
                     b.HasOne("ITIGraduationProject.Domain.Entities.Designs.Design", "Design")
                         .WithMany("CartItems")
                         .HasForeignKey("DesignId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("ITIGraduationProject.Domain.Entities.Products.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Cart");
 
                     b.Navigation("Design");
+
+                    b.Navigation("Product");
                 });
 
             modelBuilder.Entity("ITIGraduationProject.Domain.Entities.ECommerce.Order", b =>
