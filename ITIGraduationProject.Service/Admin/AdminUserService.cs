@@ -96,7 +96,8 @@ namespace ITIGraduationProject.Service.Admin
             var token = await _userManager.GeneratePasswordResetTokenAsync(applicationUser);
             var encodedToken = WebUtility.UrlEncode(token);
 
-            var invitationLink = $"{_configuration["AppSettings:ClientBaseUrl"]}/accept-invitation?userId={applicationUser.Id}&token={encodedToken}";
+            var invitationLink =
+               $"{_configuration.GetSection("ClientSettings:ClientBaseUrl").Value}/reset-password?email={applicationUser.Email}&token={encodedToken}";
 
             var body = $"<h3>You've been invited as {request.Role}!</h3>" +
                         $"<p>Click <a href='{invitationLink}'>here</a> to set your password and activate your account.</p>";

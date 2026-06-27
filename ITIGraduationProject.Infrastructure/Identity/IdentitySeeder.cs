@@ -29,6 +29,7 @@ namespace ITIGraduationProject.Infrastructure.Identity
 
             await SeedRolesAsync(roleManager, logger);
             await SeedAdminAsync(userManager, context, configuration, logger);
+            await SeedPrinterAsync(userManager, context, configuration, logger);
         }
 
         private static async Task SeedRolesAsync(RoleManager<IdentityRole<Guid>> roleManager, ILogger logger)
@@ -131,6 +132,99 @@ namespace ITIGraduationProject.Infrastructure.Identity
                 await context.SaveChangesAsync();
 
                 logger.LogInformation("Domain User created for admin '{Email}'.", email);
+            }
+
+        }
+        private static async Task SeedPrinterAsync(
+    UserManager<ApplicationUser> userManager,
+    AppDbContext context,
+    IConfiguration configuration,
+    ILogger logger)
+        {
+            var email = configuration["PrinterSeed:Email"];
+            var password = configuration["PrinterSeed:Password"];
+            var name = configuration["PrinterSeed:Name"] ?? "Default Printer";
+
+            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+            {
+                logger.LogWarning("PrinterSeed configuration is missing. Skipping printer seeding.");
+                return;
+            }
+
+            var applicationUser = await userManager.FindByEmailAsync(email);
+
+            if (applicationUser is null)
+            {
+                var newId = Guid.NewGuid();
+
+                var domainUser = new User
+                {
+                    Id = newId,
+                    Name = name,
+                    IsActive = true,
+                    CurrentPointsBalance = 0,
+                    UserPreferences = new UserPreferences(),
+                    Cart = new Cart()
+                };
+
+                context.AppUsers.Add(domainUser);
+                await context.SaveChangesAsync();
+
+                applicationUser = new ApplicationUser
+                {
+                    Id = newId,
+                    Email = email,
+                    UserName = email,
+                    EmailConfirmed = true
+                };
+
+                var result = await userManager.CreateAsync(applicationUser, password);
+
+                if (!result.Succeeded)
+                {
+                    context.AppUsers.Remove(domainUser);
+                    await context.SaveChangesAsync();
+
+                    logger.LogError(
+                        "Failed to create printer user: {Errors}",
+                        string.Join(", ", result.Errors.Select(e => e.Description)));
+
+                    return;
+                }
+
+                logger.LogInformation("Printer ApplicationUser '{Email}' created.", email);
+            }
+            else if (!applicationUser.EmailConfirmed)
+            {
+                applicationUser.EmailConfirmed = true;
+                await userManager.UpdateAsync(applicationUser);
+            }
+
+            if (!await userManager.IsInRoleAsync(applicationUser, Roles.Printer))
+            {
+                await userManager.AddToRoleAsync(applicationUser, Roles.Printer);
+                logger.LogInformation("Printer role assigned to '{Email}'.", email);
+            }
+
+            var domainUserExists = await context.AppUsers
+                .AnyAsync(u => u.Id == applicationUser.Id);
+
+            if (!domainUserExists)
+            {
+                var domainUser = new User
+                {
+                    Id = applicationUser.Id,
+                    Name = name,
+                    IsActive = true,
+                    CurrentPointsBalance = 0,
+                    UserPreferences = new UserPreferences(),
+                    Cart = new Cart()
+                };
+
+                context.AppUsers.Add(domainUser);
+                await context.SaveChangesAsync();
+
+                logger.LogInformation("Domain User created for printer '{Email}'.", email);
             }
         }
     }
