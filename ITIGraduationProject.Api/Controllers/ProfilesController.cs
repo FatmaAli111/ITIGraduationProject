@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using MediatR;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -18,9 +19,17 @@ namespace ITIGraduationProject.Api.Controllers
             _mediator = mediator;
         }
 
+        [Authorize]
         [HttpGet("me")]
-        public async Task<IActionResult> GetProfile([FromQuery] string email)
+        public async Task<IActionResult> GetProfile()
         {
+            var email = User.FindFirst(ClaimTypes.Email)?.Value;
+
+            if (string.IsNullOrEmpty(email))
+            {
+                return Unauthorized("User is not authorized or token is invalid.");
+            }
+
             var response = await _mediator.Send(new GetProfileQuery(email));
 
             if (response != null && response.Succeeded)
@@ -31,6 +40,7 @@ namespace ITIGraduationProject.Api.Controllers
             return NotFound(response);
         }
 
+        [Authorize]
         [HttpPut("update")]
         public async Task<IActionResult> UpdateProfile([FromForm] UpdateProfileCommand command)
         {

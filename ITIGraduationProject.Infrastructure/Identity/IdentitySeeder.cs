@@ -30,6 +30,7 @@ namespace ITIGraduationProject.Infrastructure.Identity
             await SeedRolesAsync(roleManager, logger);
             await SeedAdminAsync(userManager, context, configuration, logger);
             await SeedPrinterAsync(userManager, context, configuration, logger);
+            await EnsureDomainUserIdentityFieldsAsync(context, logger);
 
             await ApplicationSeeder.SeedAsync(scope.ServiceProvider);
         }
@@ -73,6 +74,8 @@ namespace ITIGraduationProject.Infrastructure.Identity
                 {
                     Id = newId,
                     Name = name,
+                    Email = email,
+                    UserName = email,
                     IsActive = true,
                     CurrentPointsBalance = 0,
                     UserPreferences = new UserPreferences(),
@@ -124,6 +127,8 @@ namespace ITIGraduationProject.Infrastructure.Identity
                 {
                     Id = applicationUser.Id,
                     Name = name,
+                    Email = email,
+                    UserName = email,
                     IsActive = true,
                     CurrentPointsBalance = 0,
                     UserPreferences = new UserPreferences(),
@@ -135,7 +140,6 @@ namespace ITIGraduationProject.Infrastructure.Identity
 
                 logger.LogInformation("Domain User created for admin '{Email}'.", email);
             }
-
         }
         private static async Task SeedPrinterAsync(
     UserManager<ApplicationUser> userManager,
@@ -163,6 +167,8 @@ namespace ITIGraduationProject.Infrastructure.Identity
                 {
                     Id = newId,
                     Name = name,
+                    Email = email,
+                    UserName = email,
                     IsActive = true,
                     CurrentPointsBalance = 0,
                     UserPreferences = new UserPreferences(),
@@ -217,6 +223,8 @@ namespace ITIGraduationProject.Infrastructure.Identity
                 {
                     Id = applicationUser.Id,
                     Name = name,
+                    Email = email,
+                    UserName = email,
                     IsActive = true,
                     CurrentPointsBalance = 0,
                     UserPreferences = new UserPreferences(),
@@ -227,6 +235,91 @@ namespace ITIGraduationProject.Infrastructure.Identity
                 await context.SaveChangesAsync();
 
                 logger.LogInformation("Domain User created for printer '{Email}'.", email);
+            }
+        }
+
+        private static async Task EnsureDomainUserIdentityFieldsAsync(
+            AppDbContext context,
+            ILogger logger)
+        {
+            try
+            {
+                var domainUsers = await context.AppUsers
+                    .Where(user =>
+                        user.Email == null || user.Email == "" ||
+                        user.UserName == null || user.UserName == "")
+                    .ToListAsync();
+
+                logger.LogInformation(
+                    "Domain identity backfill found {UserCount} user row(s) with missing Email or UserName.",
+                    domainUsers.Count);
+
+                if (domainUsers.Count == 0)
+                {
+                    logger.LogInformation("Domain identity backfill saved 0 updated user row(s).");
+                    return;
+                }
+
+                var userIds = domainUsers.Select(user => user.Id).ToArray();
+                var identityUsers = await context.Users
+                    .Where(user => userIds.Contains(user.Id))
+                    .ToDictionaryAsync(user => user.Id);
+                var updatedCount = 0;
+
+                foreach (var domainUser in domainUsers)
+                {
+                    logger.LogInformation(
+                        "Domain identity backfill processing user {UserId}.",
+                        domainUser.Id);
+
+                    if (!identityUsers.TryGetValue(domainUser.Id, out var identityUser))
+                    {
+                        logger.LogWarning(
+                            "Domain identity backfill skipped user {UserId}: no matching AspNetUsers row.",
+                            domainUser.Id);
+                        continue;
+                    }
+
+                    var updated = false;
+
+                    if (string.IsNullOrWhiteSpace(domainUser.Email) &&
+                        !string.IsNullOrWhiteSpace(identityUser.Email))
+                    {
+                        domainUser.Email = identityUser.Email;
+                        updated = true;
+                    }
+
+                    if (string.IsNullOrWhiteSpace(domainUser.UserName) &&
+                        !string.IsNullOrWhiteSpace(identityUser.UserName))
+                    {
+                        domainUser.UserName = identityUser.UserName;
+                        updated = true;
+                    }
+
+                    if (!updated)
+                    {
+                        logger.LogWarning(
+                            "Domain identity backfill skipped user {UserId}: matching identity fields are empty.",
+                            domainUser.Id);
+                        continue;
+                    }
+
+                    updatedCount++;
+                }
+
+                if (updatedCount > 0)
+                {
+                    await context.SaveChangesAsync();
+                }
+
+                logger.LogInformation(
+                    "Domain identity backfill saved {UpdatedCount} updated user row(s).",
+                    updatedCount);
+            }
+            catch (Exception exception)
+            {
+                logger.LogError(exception, "Domain identity backfill failed.");
+                throw;
             }
         }
     }

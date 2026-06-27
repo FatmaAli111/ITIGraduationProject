@@ -127,6 +127,7 @@ public class ProfilesQueryHandlersTests
         Assert.That(result.Data.UserName, Is.EqualTo("fatma"));
         Assert.That(result.Data.Email, Is.EqualTo("fatma@test.com"));
         Assert.That(result.Data.ProfilePictureUrl, Is.EqualTo("/images/fatma.png"));
+        Assert.That(result.Data.DateJoined, Is.EqualTo(user.CreatedAt).Within(TimeSpan.FromSeconds(1)));
         Assert.That(result.Data.TotalOrdersCount, Is.EqualTo(2));
         Assert.That(result.Data.ItemsPurchasedCount, Is.EqualTo(4));
         Assert.That(result.Data.TotalSpent, Is.EqualTo(200m));
