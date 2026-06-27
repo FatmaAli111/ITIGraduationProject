@@ -343,6 +343,47 @@ namespace ITIGraduationProject.Service.Identity.Authantication
                 "Password reset successfully.");
         }
 
+        public async Task<Response<string>> AcceptInvitationAsync(
+            Guid userId,
+            string token,
+            string newPassword)
+        {
+            var applicationUser = await _userManager.FindByIdAsync(userId.ToString());
+            if (applicationUser == null)
+                return NotFound<string>("Invitation user not found.");
+
+            var domainUser = await _unitOfWork.Users.GetByIdAsync(userId);
+            if (domainUser == null)
+                return NotFound<string>("Invitation user profile not found.");
+
+            if (applicationUser.EmailConfirmed && domainUser.IsActive)
+                return BadRequest<string>("This invitation has already been accepted.");
+
+            applicationUser.EmailConfirmed = true;
+            var resetResult = await _userManager.ResetPasswordAsync(
+                applicationUser,
+                token,
+                newPassword);
+
+            if (!resetResult.Succeeded)
+            {
+                applicationUser.EmailConfirmed = false;
+                return BadRequest<string>(
+                    string.Join(", ", resetResult.Errors.Select(error => error.Description)));
+            }
+
+            domainUser.IsActive = true;
+            _unitOfWork.Users.Update(domainUser);
+            await _unitOfWork.SaveChangesAsync();
+
+            return new Response<string>
+            {
+                StatusCode = HttpStatusCode.OK,
+                Succeeded = true,
+                Message = "Invitation accepted. You can now sign in."
+            };
+        }
+
         public async Task<Response<LoginResponseDTO>> ExternalLoginAsync()
         {
             var info = await _signInManager.GetExternalLoginInfoAsync();

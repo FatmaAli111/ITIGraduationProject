@@ -10,6 +10,8 @@ using ITIGraduationProject.Domain.Entities.Identity;
 using ITIGraduationProject.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using ITIGraduationProject.Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,17 +27,20 @@ namespace ITIGraduationProject.Service.Admin
         private readonly IUnitOfWork _unitOfWork;
         private readonly IEmailService _emailService;
         private readonly IConfiguration _configuration;
+        private readonly ILogger<AdminUserService> _logger;
 
         public AdminUserService(
             UserManager<ApplicationUser> userManager,
             IUnitOfWork unitOfWork,
             IEmailService emailService,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            ILogger<AdminUserService> logger)
         {
             _userManager = userManager;
             _unitOfWork = unitOfWork;
             _emailService = emailService;
             _configuration = configuration;
+            _logger = logger;
         }
 
         public async Task<Response<string>> InviteUserAsync(InviteUserRequestDTO request)
@@ -46,6 +51,14 @@ namespace ITIGraduationProject.Service.Admin
 
             if (request.Role != Roles.Admin && request.Role != Roles.Printer)
                 return BadRequest<string>("Invalid role for invitation.");
+
+            if (request.Role == Roles.Printer &&
+                (!HasValidFabricFlags(request.SupportedFabrics) ||
+                 !HasValidPrintMethodFlags(request.SupportedPrintMethods)))
+            {
+                return BadRequest<string>(
+                    "At least one valid fabric and print method is required for printers.");
+            }
 
             var newId = Guid.NewGuid();
 
@@ -86,25 +99,63 @@ namespace ITIGraduationProject.Service.Admin
 
             if (!result.Succeeded)
             {
-                _unitOfWork.Users.Delete(domainUser);
-                await _unitOfWork.SaveChangesAsync();
+                await CleanupInvitedUserAsync(domainUser);
                 return BadRequest<string>(string.Join(", ", result.Errors.Select(e => e.Description)));
             }
 
-            await _userManager.AddToRoleAsync(applicationUser, request.Role);
+            var roleResult = await _userManager.AddToRoleAsync(applicationUser, request.Role);
+            if (!roleResult.Succeeded)
+            {
+                await CleanupInvitedUserAsync(domainUser, applicationUser);
+                return BadRequest<string>(string.Join(", ", roleResult.Errors.Select(e => e.Description)));
+            }
 
-            var token = await _userManager.GeneratePasswordResetTokenAsync(applicationUser);
-            var encodedToken = WebUtility.UrlEncode(token);
+            try
+            {
+                await SendInvitationEmailAsync(applicationUser, request.Role);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send invitation email to {Email}", request.Email);
+                await CleanupInvitedUserAsync(domainUser, applicationUser);
+                return BadRequest<string>(
+                    "Invitation email could not be sent. No user was created.");
+            }
 
+            return Success<string>(applicationUser.Id.ToString(), "Invitation sent successfully.");
+        }
             var invitationLink =
                $"{_configuration.GetSection("ClientSettings:ClientBaseUrl").Value}/reset-password?email={applicationUser.Email}&token={encodedToken}";
 
-            var body = $"<h3>You've been invited as {request.Role}!</h3>" +
-                        $"<p>Click <a href='{invitationLink}'>here</a> to set your password and activate your account.</p>";
+        public async Task<Response<string>> ResendInvitationAsync(Guid id)
+        {
+            var applicationUser = await _userManager.FindByIdAsync(id.ToString());
+            if (applicationUser == null || string.IsNullOrWhiteSpace(applicationUser.Email))
+                return NotFound<string>("User not found.");
 
-            await _emailService.SendEmailAsync(request.Email, $"Invitation - {request.Role}", body);
+            if (applicationUser.EmailConfirmed)
+                return BadRequest<string>("This user has already accepted the invitation.");
 
-            return Success<string>(applicationUser.Id.ToString(), "Invitation sent successfully.");
+            var roles = await _userManager.GetRolesAsync(applicationUser);
+            var role = roles.FirstOrDefault();
+            if (role != Roles.Admin && role != Roles.Printer)
+                return BadRequest<string>("Only Admin and Printer invitations can be resent.");
+
+            try
+            {
+                await SendInvitationEmailAsync(applicationUser, role);
+                return new Response<string>
+                {
+                    StatusCode = HttpStatusCode.OK,
+                    Succeeded = true,
+                    Message = "Invitation email resent successfully."
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to resend invitation email to {Email}", applicationUser.Email);
+                return BadRequest<string>("Invitation email could not be sent.");
+            }
         }
 
         public async Task<PaginatedResult<UserListItemDTO>> GetUsersAsync(string? search, int pageNumber, int pageSize)
@@ -127,7 +178,8 @@ namespace ITIGraduationProject.Service.Admin
                     Email = appUser?.Email ?? "",
                     Role = roles.FirstOrDefault() ?? "",
                     JoinedAt = user.CreatedAt,
-                    IsActive = user.IsActive
+                    IsActive = user.IsActive,
+                    EmailConfirmed = appUser?.EmailConfirmed ?? false
                 });
             }
 
@@ -197,8 +249,21 @@ namespace ITIGraduationProject.Service.Admin
                 return NotFound<string>("User not found.");
 
             var currentRoles = await _userManager.GetRolesAsync(applicationUser);
-            await _userManager.RemoveFromRolesAsync(applicationUser, currentRoles);
-            await _userManager.AddToRoleAsync(applicationUser, newRole);
+            if (currentRoles.Count > 0)
+            {
+                var removeResult = await _userManager.RemoveFromRolesAsync(applicationUser, currentRoles);
+                if (!removeResult.Succeeded)
+                    return BadRequest<string>(string.Join(", ", removeResult.Errors.Select(e => e.Description)));
+            }
+
+            var addResult = await _userManager.AddToRoleAsync(applicationUser, newRole);
+            if (!addResult.Succeeded)
+            {
+                if (currentRoles.Count > 0)
+                    await _userManager.AddToRolesAsync(applicationUser, currentRoles);
+
+                return BadRequest<string>(string.Join(", ", addResult.Errors.Select(e => e.Description)));
+            }
 
             return Success<string>(null, "User role updated successfully.");
         }
@@ -210,6 +275,65 @@ namespace ITIGraduationProject.Service.Admin
 
             var roles = await _userManager.GetRolesAsync(user);
             return roles.FirstOrDefault() ?? string.Empty;
+        }
+
+        private static bool HasValidFabricFlags(FabricType? value)
+        {
+            const FabricType allowed = FabricType.Cotton | FabricType.Polyester |
+                                       FabricType.Wool | FabricType.Silk | FabricType.Linen;
+            return value.HasValue && value.Value != 0 && (value.Value & ~allowed) == 0;
+        }
+
+        private async Task SendInvitationEmailAsync(ApplicationUser applicationUser, string role)
+        {
+            if (string.IsNullOrWhiteSpace(applicationUser.Email))
+                throw new InvalidOperationException("Invitation email address is missing.");
+
+            var clientBaseUrl = _configuration["ClientSettings:ClientBaseUrl"]?.TrimEnd('/');
+            if (string.IsNullOrWhiteSpace(clientBaseUrl))
+                throw new InvalidOperationException("Client base URL is not configured.");
+
+            var token = await _userManager.GeneratePasswordResetTokenAsync(applicationUser);
+            var encodedToken = WebUtility.UrlEncode(token);
+            var invitationLink = $"{clientBaseUrl}/accept-invitation?userId={applicationUser.Id}&token={encodedToken}";
+            var body = $"<h3>You've been invited as {role}!</h3>" +
+                       $"<p>Click <a href='{invitationLink}'>here</a> to set your password and activate your account.</p>";
+
+            await _emailService.SendEmailAsync(
+                applicationUser.Email,
+                $"Invitation - {role}",
+                body);
+        }
+
+        private static bool HasValidPrintMethodFlags(PrintMethodType? value)
+        {
+            const PrintMethodType allowed = PrintMethodType.DirectToGarment |
+                                            PrintMethodType.ScreenPrinting |
+                                            PrintMethodType.HeatTransfer |
+                                            PrintMethodType.Sublimation |
+                                            PrintMethodType.Embroidery;
+            return value.HasValue && value.Value != 0 && (value.Value & ~allowed) == 0;
+        }
+
+        private async Task CleanupInvitedUserAsync(
+            User domainUser,
+            ApplicationUser? applicationUser = null)
+        {
+            try
+            {
+                if (applicationUser is not null)
+                    await _userManager.DeleteAsync(applicationUser);
+
+                _unitOfWork.Users.Delete(domainUser);
+                await _unitOfWork.SaveChangesAsync();
+            }
+            catch (Exception cleanupException)
+            {
+                _logger.LogError(
+                    cleanupException,
+                    "Failed to roll back invited user {UserId}",
+                    domainUser.Id);
+            }
         }
     }
 }

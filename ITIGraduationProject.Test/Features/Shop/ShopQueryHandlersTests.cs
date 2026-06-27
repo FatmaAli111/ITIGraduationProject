@@ -4,6 +4,7 @@ using ITIGraduationProject.Application.Features.Shop.Queries.Handlers;
 using ITIGraduationProject.Application.Features.Shop.Queries.Models;
 using ITIGraduationProject.Application.Interfaces.IRepositories;
 using ITIGraduationProject.Application.Interfaces.Persistence;
+using ITIGraduationProject.Application.Interfaces.Repositories;
 using ITIGraduationProject.Application.Repositories;
 using ITIGraduationProject.Domain.Entities.Products;
 using ITIGraduationProject.Domain.Enums;
@@ -20,6 +21,7 @@ public class ShopQueryHandlersTests
     private Mock<IUnitOfWork> _uow = null!;
     private Mock<IProductRepository> _productsRepo = null!;
     private Mock<IProductImageRepository> _productImagesRepo = null!;
+    private Mock<ICategoryRepository> _categoriesRepo = null!;
 
     private GetCategoriesQueryHandler _categoriesHandler = null!;
     private GetProductByIdQueryHandler _productByIdHandler = null!;
@@ -43,9 +45,11 @@ public class ShopQueryHandlersTests
         _uow = new Mock<IUnitOfWork>();
         _productsRepo = new Mock<IProductRepository>();
         _productImagesRepo = new Mock<IProductImageRepository>();
+        _categoriesRepo = new Mock<ICategoryRepository>();
 
         _uow.Setup(x => x.Products).Returns(_productsRepo.Object);
         _uow.Setup(x => x.ProductImages).Returns(_productImagesRepo.Object);
+        _uow.Setup(x => x.Categories).Returns(_categoriesRepo.Object);
 
         _categoriesHandler = new GetCategoriesQueryHandler(_uow.Object);
         _productByIdHandler = new GetProductByIdQueryHandler(_uow.Object);
@@ -54,49 +58,19 @@ public class ShopQueryHandlersTests
     }
 
     [Test]
-    public async Task GetCategories_Should_Return_Distinct_Categories()
+    public async Task GetCategories_Should_Return_All_NonDeleted_Categories()
     {
         var category1 = new Category { Id = Guid.NewGuid(), Name = "T-Shirts" };
         var category2 = new Category { Id = Guid.NewGuid(), Name = "Mugs" };
-
-        var products = new List<Product>
+        var categories = new List<Category>
         {
-            new()
-            {
-                Id = Guid.NewGuid(),
-                Name = "Tee 1",
-                Category = category1,
-                CategoryId = category1.Id,
-                IsDeleted = false
-            },
-            new()
-            {
-                Id = Guid.NewGuid(),
-                Name = "Tee 2",
-                Category = category1,
-                CategoryId = category1.Id,
-                IsDeleted = false
-            },
-            new()
-            {
-                Id = Guid.NewGuid(),
-                Name = "Mug",
-                Category = category2,
-                CategoryId = category2.Id,
-                IsDeleted = false
-            },
-            new()
-            {
-                Id = Guid.NewGuid(),
-                Name = "Deleted",
-                Category = category2,
-                CategoryId = category2.Id,
-                IsDeleted = true
-            }
+            category1,
+            category2,
+            new() { Id = Guid.NewGuid(), Name = "Deleted", IsDeleted = true }
         };
 
-        _productsRepo.Setup(x => x.GetTableNoTracking())
-            .Returns(products.AsQueryable().BuildMock());
+        _categoriesRepo.Setup(x => x.GetTableNoTracking())
+            .Returns(categories.AsQueryable().BuildMock());
 
         var result = await _categoriesHandler.Handle(new GetCategoriesQuery(), CancellationToken.None);
 

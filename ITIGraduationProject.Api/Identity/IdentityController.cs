@@ -87,6 +87,13 @@ namespace ITIGraduationProject.Api.IdentityControllers
             return Ok(result);
         }
 
+        [HttpPost("accept-invitation")]
+        public async Task<IActionResult> AcceptInvitation([FromBody] AcceptInvitationCommand command)
+        {
+            var result = await _mediatr.Send(command);
+            return StatusCode((int)result.StatusCode, result);
+        }
+
         [HttpGet("external-login")]
         public IActionResult ExternalLogin(string provider)
         {
