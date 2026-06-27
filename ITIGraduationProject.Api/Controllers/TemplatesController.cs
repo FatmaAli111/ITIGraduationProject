@@ -1,4 +1,4 @@
-﻿using ITIGraduationProject.Application.Features.Templates.Commands.Models;
+using ITIGraduationProject.Application.Features.Templates.Commands.Models;
 using ITIGraduationProject.Application.Features.Templates.Queries.Models;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -36,6 +36,15 @@ namespace ITIGraduationProject.Api.Controllers
         [Authorize]
         public async Task<IActionResult> Generate([FromBody] GenerateAITemplateCommand cmd)
             => Ok(await _mediator.Send(cmd));
+
+        /// <summary>
+        /// Generates 3 personalized AI templates based on the user's onboarding preferences.
+        /// Called right after onboarding completes.
+        /// </summary>
+        [HttpPost("generate-onboarding")]
+        [Authorize]
+        public async Task<IActionResult> GenerateOnboardingTemplates()
+            => Ok(await _mediator.Send(new GenerateOnboardingTemplatesCommand()));
 
         [HttpPut("{id:guid}")]
         [Authorize]
