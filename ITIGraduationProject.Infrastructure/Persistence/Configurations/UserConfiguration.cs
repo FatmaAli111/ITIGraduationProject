@@ -26,6 +26,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.ProfileImageUrl).HasMaxLength(500);
         builder.Property(u => u.CurrentPointsBalance).HasDefaultValue(0);
         builder.Property(u => u.IsActive).HasDefaultValue(true);
+        builder.Property(u => u.OnboardingCompleted).HasDefaultValue(false);
 
         
         builder.HasOne(u => u.UserPreferences)

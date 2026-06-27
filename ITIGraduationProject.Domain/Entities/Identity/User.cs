@@ -16,6 +16,7 @@ public class User : BaseAuditableEntity
     public string Email { get; set; } = string.Empty;
     public string? Bio { get; set; }
     public bool IsActive { get; set; }
+    public bool OnboardingCompleted { get; set; } = false;
     public string? ProfileImageUrl { get; set; }
     public int CurrentPointsBalance { get; set; }
     public int TotalRewardPoints { get; set; } = 0;

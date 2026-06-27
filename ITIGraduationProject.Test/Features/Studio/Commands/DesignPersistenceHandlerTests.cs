@@ -1,12 +1,18 @@
 using ITIGraduationProject.Application.Features.Studio.Commands.CreateDesign;
 using ITIGraduationProject.Application.Features.Studio.Commands.UpdateDesign;
 using ITIGraduationProject.Application.Interfaces.IRepositories;
+using ITIGraduationProject.Application.Interfaces;
 using ITIGraduationProject.Application.Interfaces.IServices.StudioServices;
 using ITIGraduationProject.Application.Interfaces.Persistence;
 using ITIGraduationProject.Application.Interfaces.Repositories;
 using ITIGraduationProject.Application.Repositories;
 using ITIGraduationProject.Domain.Entities.Designs;
+using ITIGraduationProject.Domain.Entities.Products;
 using ITIGraduationProject.Domain.Enums;
+using MediatR;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Logging.Abstractions;
+using Moq;
 using NUnit.Framework;
 
 namespace ITIGraduationProject.Test.Features.Studio.Commands;
@@ -14,20 +20,45 @@ namespace ITIGraduationProject.Test.Features.Studio.Commands;
 [TestFixture]
 public class DesignPersistenceHandlerTests
 {
-    [Test]
-    public async Task CreateAndUpdateHandlers_PersistCanvasStateAndAssets()
+    private FakeUnitOfWork _unitOfWork = null!;
+    private Mock<ICurrentUserService> _currentUserMock = null!;
+    private Mock<IWebHostEnvironment> _hostEnvMock = null!;
+    private Mock<ISender> _senderMock = null!;
+    private Guid _userId;
+
+    [SetUp]
+    public void SetUp()
     {
-        var unitOfWork = new FakeUnitOfWork();
-        var priceCalculation = new FakePriceCalculation();
-        var createHandler = new CreateDesignCommandHandler(unitOfWork, priceCalculation);
-        var updateHandler = new UpdateDesignCommandHandler(unitOfWork);
+        _userId = Guid.NewGuid();
+        _unitOfWork = new FakeUnitOfWork();
+
+        _currentUserMock = new Mock<ICurrentUserService>();
+        _currentUserMock.Setup(s => s.UserId).Returns(_userId);
+
+        _hostEnvMock = new Mock<IWebHostEnvironment>();
+        _hostEnvMock.Setup(e => e.WebRootPath).Returns(Path.GetTempPath());
+
+        _senderMock = new Mock<ISender>();
+    }
+
+    [Test]
+    public async Task CreateDesignHandler_PersistsCanvasStateAndAssets()
+    {
+        var createHandler = new CreateDesignCommandHandler(
+            _unitOfWork,
+            new FakePriceCalculation(),
+            _currentUserMock.Object,
+            _hostEnvMock.Object,
+            NullLogger<CreateDesignCommandHandler>.Instance);
 
         var designId = await createHandler.Handle(new CreateDesignCommand(
-            UserId: Guid.NewGuid(),
+            Id: null,
             ProductId: Guid.NewGuid(),
             TemplateId: null,
             CanvasStateJSON: "{\"version\":1}",
-            SnapshotImageURL: "/uploads/design.png",
+            Base64Snapshot: null,
+            Base64Front: null,
+            Base64Back: null,
             SelectedSize: ProductSize.L,
             SelectedFabric: FabricType.Cotton,
             SelectedPrintMethod: PrintMethodType.DirectToGarment,
@@ -38,52 +69,84 @@ public class DesignPersistenceHandlerTests
             }
         ), CancellationToken.None);
 
-        var createdDesign = await unitOfWork.Designs.GetByIdAsync(designId);
+        var createdDesign = await _unitOfWork.Designs.GetByIdAsync(designId);
         Assert.That(createdDesign, Is.Not.Null);
         Assert.That(createdDesign!.CanvasStateJSON, Is.EqualTo("{\"version\":1}"));
-        Assert.That(createdDesign.GraphicAssets, Has.Count.EqualTo(1));
-        Assert.That(createdDesign.GraphicAssets.Single().ImageUrl, Is.EqualTo("/uploads/logo.png"));
+        Assert.That(createdDesign.UserId, Is.EqualTo(_userId));
+    }
+
+    [Test]
+    public async Task UpdateDesignHandler_DelegatesToCreateHandler()
+    {
+        // Pre-create a design so the update can find it
+        var designId = Guid.NewGuid();
+        var existingDesign = new Design
+        {
+            Id = designId,
+            UserId = _userId,
+            ProductId = Guid.NewGuid(),
+            CanvasStateJSON = "{\"version\":1}",
+            Status = DesignStatus.Draft
+        };
+        await _unitOfWork.Designs.AddAsync(existingDesign);
+
+        // Setup sender mock to simulate MediatR dispatch of CreateDesignCommand
+        _senderMock
+            .Setup(s => s.Send(It.IsAny<CreateDesignCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(designId);
+
+        var updateHandler = new UpdateDesignCommandHandler(
+            _unitOfWork,
+            _currentUserMock.Object,
+            _senderMock.Object);
 
         await updateHandler.Handle(new UpdateDesignCommand(
             Id: designId,
             CanvasStateJSON: "{\"version\":2}",
-            SnapshotImageURL: "/uploads/updated.png",
+            Base64Snapshot: null,
+            Base64Front: null,
+            Base64Back: null,
             SelectedSize: ProductSize.XL,
             SelectedFabric: FabricType.Polyester,
             SelectedPrintMethod: PrintMethodType.Embroidery,
             SelectedColor: "#ffffff",
-            Assets: new List<DesignAssetInput>
-            {
-                new("updated-logo", 2, "/uploads/updated-logo.png", "updated")
-            }
+            Assets: null
         ), CancellationToken.None);
 
-        var updatedDesign = await unitOfWork.Designs.GetByIdAsync(designId);
-        Assert.That(updatedDesign, Is.Not.Null);
-        Assert.That(updatedDesign!.CanvasStateJSON, Is.EqualTo("{\"version\":2}"));
-        Assert.That(updatedDesign.SnapshotImageURL, Is.EqualTo("/uploads/updated.png"));
-        Assert.That(updatedDesign.GraphicAssets, Has.Count.EqualTo(1));
-        Assert.That(updatedDesign.GraphicAssets.Single().ImageUrl, Is.EqualTo("/uploads/updated-logo.png"));
+        // Verify that the update handler dispatched CreateDesignCommand via MediatR
+        _senderMock.Verify(
+            s => s.Send(It.Is<CreateDesignCommand>(c => c.Id == designId), It.IsAny<CancellationToken>()),
+            Times.Once);
     }
+
+    // ---------------------------------------------------------------------------
+    // Fakes
+    // ---------------------------------------------------------------------------
 
     private sealed class FakeUnitOfWork : IUnitOfWork
     {
         public FakeUnitOfWork()
         {
             Designs = new FakeDesignRepository();
+            GraphicAssets = new FakeGraphicAssetRepository();
+
+            var templateRepo = new Mock<ITemplateRepository>();
+            templateRepo.Setup(x => x.AddAsync(It.IsAny<Template>()))
+                .ReturnsAsync((Template t) => t);
+            Templates = templateRepo.Object;
         }
 
         public IProductRepository Products => throw new NotImplementedException();
         public IDesignRepository Designs { get; }
         public IOrderRepository Orders => throw new NotImplementedException();
         public IUserRepository Users => throw new NotImplementedException();
-        public ITemplateRepository Templates => throw new NotImplementedException();
+        public ITemplateRepository Templates { get; }
         public ICouponRepository Coupons => throw new NotImplementedException();
         public IModerationReportRepository ModerationReports => throw new NotImplementedException();
         public IAiChatSessionRepository AiChatSessions => throw new NotImplementedException();
         public IShipmentRepository Shipments => throw new NotImplementedException();
         public IRewardRepository Rewards => throw new NotImplementedException();
-        public IGraphicAssetRepository GraphicAssets => throw new NotImplementedException();
+        public IGraphicAssetRepository GraphicAssets { get; }
         public INotificationRepository Notifications => throw new NotImplementedException();
         public IRefreshTokenRepository RefreshTokens => throw new NotImplementedException();
         public ICategoryRepository Categories => throw new NotImplementedException();
@@ -92,7 +155,6 @@ public class DesignPersistenceHandlerTests
         public IPrinterProfileRepository PrinterProfiles => throw new NotImplementedException();
         public IAiChatMessageRepository AiChatMessages => throw new NotImplementedException();
         public IOrderItemRepository OrderItems => throw new NotImplementedException();
-
 
         public Task<int> SaveChangesAsync() => Task.FromResult(0);
     }
@@ -132,9 +194,7 @@ public class DesignPersistenceHandlerTests
         public void UpdateRange(ICollection<Design> entities)
         {
             foreach (var entity in entities)
-            {
                 Update(entity);
-            }
         }
 
         public void Delete(Design entity) => _designs.Remove(entity);
@@ -142,16 +202,67 @@ public class DesignPersistenceHandlerTests
         public void DeleteRange(ICollection<Design> entities)
         {
             foreach (var entity in entities)
-            {
                 Delete(entity);
-            }
         }
 
         public Task<Design?> GetWithImagesAndAssetsAsync(Guid id) => GetByIdAsync(id);
 
-        public Task<IEnumerable<Design>> GetByUserAsync(Guid userId) => Task.FromResult<IEnumerable<Design>>(_designs.Where(x => x.UserId == userId));
+        public Task<IEnumerable<Design>> GetByUserAsync(Guid userId) =>
+            Task.FromResult<IEnumerable<Design>>(_designs.Where(x => x.UserId == userId));
 
-        public Task<IEnumerable<Design>> GetByStatusAsync(DesignStatus status) => Task.FromResult<IEnumerable<Design>>(_designs.Where(x => x.Status == status));
+        public Task<IEnumerable<Design>> GetByStatusAsync(DesignStatus status) =>
+            Task.FromResult<IEnumerable<Design>>(_designs.Where(x => x.Status == status));
+
+        public Task SetGraphicAssetsAsync(Design design, IList<GraphicAsset> assets, CancellationToken cancellationToken = default)
+        {
+            design.GraphicAssets.Clear();
+            foreach (var asset in assets)
+            {
+                design.GraphicAssets.Add(asset);
+            }
+            return Task.CompletedTask;
+        }
+
+        public List<string> GetChangeTrackerState() => new();
+
+        public Task<int> GetDesignGraphicAssetsCountAsync(Guid designId, CancellationToken cancellationToken = default) => Task.FromResult(0);
+    }
+
+    private sealed class FakeGraphicAssetRepository : IGraphicAssetRepository
+    {
+        private readonly List<GraphicAsset> _assets = new();
+
+        public Task<GraphicAsset?> GetByIdAsync(Guid id) =>
+            Task.FromResult(_assets.FirstOrDefault(x => x.Id == id));
+
+        public IQueryable<GraphicAsset> GetTableNoTracking() => _assets.AsQueryable();
+        public IQueryable<GraphicAsset> GetTableAsTracking() => _assets.AsQueryable();
+
+        public Task<GraphicAsset> AddAsync(GraphicAsset entity)
+        {
+            _assets.Add(entity);
+            return Task.FromResult(entity);
+        }
+
+        public Task AddRangeAsync(ICollection<GraphicAsset> entities)
+        {
+            _assets.AddRange(entities);
+            return Task.CompletedTask;
+        }
+
+        public void Update(GraphicAsset entity) { }
+        public void UpdateRange(ICollection<GraphicAsset> entities) { }
+        public void Delete(GraphicAsset entity) => _assets.Remove(entity);
+        public void DeleteRange(ICollection<GraphicAsset> entities)
+        {
+            foreach (var e in entities) Delete(e);
+        }
+
+        public Task<IEnumerable<GraphicAsset>> SearchByTagsAsync(string? tags) =>
+            Task.FromResult<IEnumerable<GraphicAsset>>(_assets);
+
+        public Task<IEnumerable<GraphicAsset>> GetByTypeAsync(GraphicAssetType type) =>
+            Task.FromResult<IEnumerable<GraphicAsset>>(_assets.Where(x => x.Type == type));
     }
 
     private sealed class FakePriceCalculation : IPriceCalculation

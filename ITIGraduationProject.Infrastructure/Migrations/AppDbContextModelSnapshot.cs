@@ -1027,6 +1027,11 @@ namespace ITIGraduationProject.Infrastructure.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
+                    b.Property<bool>("OnboardingCompleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
                     b.Property<string>("ProfileImageUrl")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");

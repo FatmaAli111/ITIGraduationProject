@@ -6,11 +6,13 @@ using MediatR;
 namespace ITIGraduationProject.Application.Features.Studio.Commands.CreateDesign;
 
 public record CreateDesignCommand(
-    Guid UserId,
+    Guid? Id,
     Guid ProductId,
     Guid? TemplateId,
     string CanvasStateJSON,
-    string SnapshotImageURL,
+    string? Base64Snapshot,
+    string? Base64Front,
+    string? Base64Back,
     ProductSize? SelectedSize,
     FabricType? SelectedFabric,
     PrintMethodType? SelectedPrintMethod,
