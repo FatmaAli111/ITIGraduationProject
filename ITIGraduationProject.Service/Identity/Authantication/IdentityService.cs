@@ -1,4 +1,4 @@
-﻿using ITIGraduationProject.Application.Bases;
+using ITIGraduationProject.Application.Bases;
 using ITIGraduationProject.Application.DTOS;
 using ITIGraduationProject.Application.Interfaces.IServices.IdentityServices;
 using ITIGraduationProject.Application.Interfaces.Persistence;
@@ -494,6 +494,8 @@ namespace ITIGraduationProject.Service.Identity.Authantication
             if (domainUser.UserPreferences != null)
             {
                 domainUser.UserPreferences.FavoriteColors = dto.FavoriteColors;
+                domainUser.UserPreferences.BannedColors = dto.BannedColors;
+                domainUser.UserPreferences.StyleType = dto.StyleType;
                 domainUser.UserPreferences.Interests = dto.Interests;
                 domainUser.UserPreferences.DesignPreference = dto.DesignPreference;
             }
@@ -515,6 +517,8 @@ namespace ITIGraduationProject.Service.Identity.Authantication
             var dto = new UserPreferencesDTO
             {
                 FavoriteColors = prefs?.FavoriteColors ?? "",
+                BannedColors = prefs?.BannedColors ?? "",
+                StyleType = prefs?.StyleType ?? "",
                 Interests = prefs?.Interests ?? "",
                 DesignPreference = prefs?.DesignPreference ?? ""
             };
