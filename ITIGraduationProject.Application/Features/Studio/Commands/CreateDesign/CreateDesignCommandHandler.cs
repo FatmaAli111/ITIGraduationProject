@@ -290,6 +290,22 @@ public class CreateDesignCommandHandler : IRequestHandler<CreateDesignCommand, G
             {
                 _logger.LogInformation("No changes detected in canvas state or customization properties. Reusing existing snapshot files.");
             }
+            // Create or update template for this design
+            var template = new Template
+            {
+                Id = Guid.NewGuid(),
+                CreatorUserId = userId,
+                Name = $"Design {DateTime.UtcNow:yyyyMMddHHmmss}",
+                PreviewImageURL = design.SnapshotImageURL,
+                IsPublic = false,
+                LikesCount = 0,
+                RemixesCount = 0,
+                AverageRating = 0,
+                ReviewCount = 0,
+                StyleTags = null
+            };
+
+            await _unitOfWork.Templates.AddAsync(template);
 
             // Check 6 - ChangeTracker state immediately before SaveChanges
             var changeTrackerStates = _unitOfWork.Designs.GetChangeTrackerState();
