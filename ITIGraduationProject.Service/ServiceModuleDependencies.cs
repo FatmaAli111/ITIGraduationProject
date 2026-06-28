@@ -1,4 +1,4 @@
-﻿using ITIGraduationProject.Application.Interfaces; 
+using ITIGraduationProject.Application.Interfaces; 
 using ITIGraduationProject.Application.Interfaces.IAiService;
 using ITIGraduationProject.Application.Interfaces.IServices.AdminIServices;
 using ITIGraduationProject.Application.Interfaces.IServices.FilesServices;
@@ -36,11 +36,7 @@ namespace ITIGraduationProject.Service
             services.AddScoped<IFileService, LocalFileService>();
             services.AddHttpClient<IAiService, AiService>();
             services.AddScoped<IReportChatService,ReportChatService>();
-            services.AddHttpClient<ILangflowService,LangflowService>(client =>
-                {
-                    client.BaseAddress =
-            new Uri("http://localhost:7860/");
-                });
+            services.AddHttpClient<ILangflowService, LangflowService>();
         }
     }
 }
