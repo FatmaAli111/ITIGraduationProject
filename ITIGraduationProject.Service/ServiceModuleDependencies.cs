@@ -18,6 +18,7 @@ using ITIGraduationProject.Service.ReportGenerator;
 using ITIGraduationProject.Service.Studio;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace ITIGraduationProject.Service
 {
@@ -35,8 +36,24 @@ namespace ITIGraduationProject.Service
             services.AddScoped<IPriceCalculation, PriceCalculationService>();
             services.AddScoped<IFileService, LocalFileService>();
             services.AddHttpClient<IAiService, AiService>();
-            services.AddScoped<IReportChatService,ReportChatService>();
-            services.AddHttpClient<ILangflowService, LangflowService>();
+            services.AddScoped<IReportChatService, ReportChatService>();
+            services.Configure<ReportGeneratorSettings>(
+                configuration.GetSection(ReportGeneratorSettings.SectionName));
+            services.AddHttpClient<ILangflowService, LangflowService>((serviceProvider, client) =>
+            {
+                var settings = serviceProvider
+                    .GetRequiredService<IOptions<ReportGeneratorSettings>>()
+                    .Value;
+
+                if (Uri.TryCreate(settings.BaseUrl, UriKind.Absolute, out var baseAddress))
+                {
+                    client.BaseAddress = new Uri(
+                        baseAddress.ToString().TrimEnd('/') + "/");
+                }
+
+                client.Timeout = TimeSpan.FromSeconds(
+                    settings.TimeoutSeconds > 0 ? settings.TimeoutSeconds : 180);
+            });
         }
     }
 }

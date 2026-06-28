@@ -10,7 +10,7 @@ namespace ITIGraduationProject.Api.Admin
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    [Authorize(Roles = Roles.Admin)]
     public class ReportChatController : ControllerBase
     {
         private readonly IMediator _mediator;
