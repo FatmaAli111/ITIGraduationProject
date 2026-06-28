@@ -101,6 +101,10 @@ namespace ITIGraduationProject.Api
                 app.UseSwaggerUI();
             }
             await IdentitySeeder.SeedAsync(app.Services);
+            if (app.Environment.IsDevelopment())
+            {
+                await DemoDataSeeder.SeedAsync(app.Services);
+            }
             app.UseSwagger();
             app.UseSwaggerUI(c =>
             {
