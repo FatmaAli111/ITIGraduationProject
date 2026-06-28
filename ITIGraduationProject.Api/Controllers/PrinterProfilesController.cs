@@ -24,7 +24,7 @@ namespace ITIGraduationProject.Api.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = Roles.Admin)]
+        [Authorize(Roles = $"{Roles.Admin},{Roles.Printer}")]
         public async Task<IActionResult> GetAll([FromQuery] GetPrinterProfilesQuery query)
             => Ok(await _mediator.Send(query));
     }

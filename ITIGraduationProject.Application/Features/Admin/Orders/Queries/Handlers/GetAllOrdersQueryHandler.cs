@@ -43,7 +43,18 @@ namespace ITIGraduationProject.Application.Features.Admin.Orders.Queries.Handler
                     CustomerName = o.User.Name,
                     TotalAmount = o.TotalAmount,
                     Status = o.OrderStatus.ToString(),
-                    CreatedAt = o.CreatedAt
+                    CreatedAt = o.CreatedAt,
+                    OrderItems = o.OrderItems.Select(oi => new RecentOrderItemDto
+                    {
+                        Id = oi.Id,
+                        DesignName = oi.Design != null && oi.Design.Product != null ? oi.Design.Product.Name : "Custom Design",
+                        SnapshotImageURL = oi.SnapshotImageURL,
+                        Quantity = oi.Quantity,
+                        UnitPrice = oi.UnitPrice,
+                        Status = oi.Status.ToString(),
+                        PrinterProfileId = oi.PrinterProfileId,
+                        PrinterName = oi.PrinterProfile != null && oi.PrinterProfile.User != null ? oi.PrinterProfile.User.Name : null
+                    }).ToList()
                 })
                 .ToPaginatedListAsync(request.PageNumber, request.PageSize);
 
