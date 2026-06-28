@@ -29,12 +29,6 @@ public static class ApplicationSeeder
 
     private static async Task SeedTemplatesAsync(AppDbContext context, ILogger logger)
     {
-        if (await context.Templates.AnyAsync())
-        {
-            logger.LogInformation("Templates table is not empty. Skipping template seeding.");
-            return;
-        }
-
         var creatorId = await context.Users
      .Where(x => x.Email == "FatmaAli@gmail.com")
      .Select(x => x.Id)
@@ -49,6 +43,80 @@ public static class ApplicationSeeder
         if (categoryId == Guid.Empty)
         {
             logger.LogWarning("Unable to resolve a category for template seeding.");
+            return;
+        }
+
+        var hasUnpublished = await context.Templates.AnyAsync(t => t.CreatorUserId == creatorId && t.Name == "Cyberpunk Retro Wave");
+        if (!hasUnpublished)
+        {
+            var unpublishedTemplates = new[]
+            {
+                new Template
+                {
+                    CategoryId = categoryId,
+                    CreatorUserId = creatorId,
+                    Name = "Cyberpunk Retro Wave",
+                    StyleTags = "cyberpunk, retro, neon",
+                    PreviewImageURL = "https://placehold.co/600x600?text=Cyberpunk+Retro",
+                    IsPublic = false,
+                    LikesCount = 0,
+                    ReviewCount = 0,
+                    AverageRating = 0m,
+                    RemixesCount = 0,
+                    CanvasStateJSON = "{}"
+                },
+                new Template
+                {
+                    CategoryId = categoryId,
+                    CreatorUserId = creatorId,
+                    Name = "Minimalist Botanical",
+                    StyleTags = "minimalist, botanical, floral",
+                    PreviewImageURL = "https://placehold.co/600x600?text=Minimalist+Botanical",
+                    IsPublic = false,
+                    LikesCount = 0,
+                    ReviewCount = 0,
+                    AverageRating = 0m,
+                    RemixesCount = 0,
+                    CanvasStateJSON = "{}"
+                },
+                new Template
+                {
+                    CategoryId = categoryId,
+                    CreatorUserId = creatorId,
+                    Name = "Abstract Geometry Draft",
+                    StyleTags = "abstract, geometric, art",
+                    PreviewImageURL = "https://placehold.co/600x600?text=Abstract+Geometry",
+                    IsPublic = false,
+                    LikesCount = 0,
+                    ReviewCount = 0,
+                    AverageRating = 0m,
+                    RemixesCount = 0,
+                    CanvasStateJSON = "{}"
+                },
+                new Template
+                {
+                    CategoryId = categoryId,
+                    CreatorUserId = creatorId,
+                    Name = "Vintage Typography",
+                    StyleTags = "vintage, typography, custom",
+                    PreviewImageURL = "https://placehold.co/600x600?text=Vintage+Typography",
+                    IsPublic = false,
+                    LikesCount = 0,
+                    ReviewCount = 0,
+                    AverageRating = 0m,
+                    RemixesCount = 0,
+                    CanvasStateJSON = "{}"
+                }
+            };
+
+            context.Templates.AddRange(unpublishedTemplates);
+            await context.SaveChangesAsync();
+            logger.LogInformation("Seeded unpublished templates for development.");
+        }
+
+        if (await context.Templates.AnyAsync(t => t.IsPublic && !t.IsDeleted))
+        {
+            logger.LogInformation("Public templates table is not empty. Skipping public templates seeding.");
             return;
         }
 
