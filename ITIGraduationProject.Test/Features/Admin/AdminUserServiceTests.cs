@@ -275,7 +275,9 @@ public class AdminUserServiceTests
         _emailService.Verify(x => x.SendEmailAsync(
             applicationUser.Email,
             "Invitation - Printer",
-            It.Is<string>(body => body.Contains("/accept-invitation?userId="))), Times.Once);
+            It.Is<string>(body =>
+                body.Contains("/reset-password?email=pending-invite@test.com") &&
+                body.Contains("token=invitation-token"))), Times.Once);
     }
 
     [Test]

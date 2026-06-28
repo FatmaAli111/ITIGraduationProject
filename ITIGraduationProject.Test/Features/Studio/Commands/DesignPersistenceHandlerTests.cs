@@ -134,9 +134,14 @@ public class DesignPersistenceHandlerTests
             templateRepo.Setup(x => x.AddAsync(It.IsAny<Template>()))
                 .ReturnsAsync((Template t) => t);
             Templates = templateRepo.Object;
+
+            var productRepo = new Mock<IProductRepository>();
+            productRepo.Setup(x => x.GetByIdAsync(It.IsAny<Guid>()))
+                .ReturnsAsync((Product?)null);
+            Products = productRepo.Object;
         }
 
-        public IProductRepository Products => throw new NotImplementedException();
+        public IProductRepository Products { get; }
         public IDesignRepository Designs { get; }
         public IOrderRepository Orders => throw new NotImplementedException();
         public IUserRepository Users => throw new NotImplementedException();

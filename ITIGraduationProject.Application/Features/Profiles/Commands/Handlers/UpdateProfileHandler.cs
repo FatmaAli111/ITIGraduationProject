@@ -70,7 +70,12 @@ namespace ITIGraduationProject.Application.Features.Profiles.Commands.Handlers
             user.Bio = request.Bio;
 
             _unitOfWork.Users.Update(user);
-            await _unitOfWork.SaveChangesAsync();
+            var savedChanges = await _unitOfWork.SaveChangesAsync();
+
+            if (savedChanges <= 0)
+            {
+                return BadRequest<string>("No changes were saved to the database.");
+            }
 
             return Success("Success");
         }

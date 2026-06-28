@@ -3,6 +3,7 @@ using ITIGraduationProject.Application.Features.Profiles.Commands.Models;
 using ITIGraduationProject.Application.Interfaces.Persistence;
 using ITIGraduationProject.Application.Repositories;
 using ITIGraduationProject.Domain.Entities.Identity;
+using MockQueryable.Moq;
 using Moq;
 using NUnit.Framework;
 
@@ -71,6 +72,8 @@ public class ProfilesCommandHandlersTests
 
         _usersRepo.Setup(x => x.GetByIdAsync(userId))
             .ReturnsAsync((User?)null);
+        _usersRepo.Setup(x => x.GetTableNoTracking())
+            .Returns(new List<User>().AsQueryable().BuildMock());
 
         var command = new UpdateProfileCommand
         {
