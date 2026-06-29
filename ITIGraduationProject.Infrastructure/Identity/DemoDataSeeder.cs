@@ -66,6 +66,7 @@ public static class DemoDataSeeder
             var categoryIds = await SeedCategoriesAsync(context, logger);
             var productIds = await SeedProductsAsync(context, categoryIds, logger);
             await SeedProductImagesAsync(context, productIds, logger);
+            await EnsureProductForEveryCategoryAsync(context, logger);
             var templateIds = await SeedTemplatesAsync(context, categoryIds, userIds, logger);
             await SeedCommunityInteractionsAsync(context, templateIds, userIds, logger);
             var designIds = await SeedDesignsAsync(context, productIds, templateIds, userIds, logger);
@@ -275,18 +276,16 @@ public static class DemoDataSeeder
         var now = DateTime.UtcNow;
         var products = new[]
         {
-            new ProductSeed("Studio Heavyweight Tee", 0, 34.00m, ProductAvailableColors.Black | ProductAvailableColors.White | ProductAvailableColors.Gray, 4.82m, 184, "In stock"),
+            new ProductSeed("Studio Heavyweight Hoodie", 2, 58.00m, ProductAvailableColors.White | ProductAvailableColors.Gray, 4.82m, 184, "In stock"),
             new ProductSeed("Cairo Nights Oversized Tee", 0, 38.00m, ProductAvailableColors.Black | ProductAvailableColors.Maroon | ProductAvailableColors.Blue, 4.71m, 96, "In stock"),
-            new ProductSeed("Everyday Cotton Tee", 1, 24.00m, ProductAvailableColors.White | ProductAvailableColors.Black | ProductAvailableColors.Green | ProductAvailableColors.Blue, 4.46m, 231, "In stock"),
-            new ProductSeed("Atelier Zip Hoodie", 2, 62.00m, ProductAvailableColors.Black | ProductAvailableColors.Gray | ProductAvailableColors.Brown, 4.68m, 88, "Low stock"),
-            new ProductSeed("Cloud Fleece Hoodie", 2, 58.00m, ProductAvailableColors.White | ProductAvailableColors.Pink | ProductAvailableColors.Blue, 4.39m, 64, "In stock"),
-            new ProductSeed("Gallery Crewneck", 3, 49.00m, ProductAvailableColors.Gray | ProductAvailableColors.Green | ProductAvailableColors.Maroon, 4.55m, 73, "In stock"),
-            new ProductSeed("Market Canvas Tote", 4, 19.00m, ProductAvailableColors.White | ProductAvailableColors.Black | ProductAvailableColors.Brown, 4.31m, 147, "In stock"),
-            new ProductSeed("Embroidered Studio Cap", 5, 27.00m, ProductAvailableColors.Black | ProductAvailableColors.White | ProductAvailableColors.Green | ProductAvailableColors.Red, 4.76m, 119, "In stock"),
-            new ProductSeed("Utility Coach Jacket", 6, 84.00m, ProductAvailableColors.Black | ProductAvailableColors.Blue | ProductAvailableColors.Gray, 4.18m, 42, "Limited"),
-            new ProductSeed("Little Creator Tee", 7, 21.00m, ProductAvailableColors.Yellow | ProductAvailableColors.Blue | ProductAvailableColors.Pink | ProductAvailableColors.Green, 4.63m, 55, "In stock"),
-            new ProductSeed("Motion Training Top", 8, 44.00m, ProductAvailableColors.Black | ProductAvailableColors.Blue | ProductAvailableColors.Lime, 4.27m, 67, "In stock"),
-            new ProductSeed("Pocket Art Pouch", 9, 16.00m, ProductAvailableColors.White | ProductAvailableColors.Black | ProductAvailableColors.Orange | ProductAvailableColors.Purple, 4.08m, 34, "In stock")
+            new ProductSeed("Atelier Pullover Hoodie", 2, 62.00m, ProductAvailableColors.Black | ProductAvailableColors.Gray, 4.68m, 88, "In stock")
+        };
+
+        var previewImages = new[]
+        {
+            ProductImagePaths[4], // White hoodie front
+            ProductImagePaths[5], // White tee front
+            ProductImagePaths[2]  // Black hoodie front
         };
 
         var seeds = products.Select((product, index) => new Product
@@ -296,7 +295,7 @@ public static class DemoDataSeeder
             Name = product.Name,
             BasePrice = product.Price,
             AvailableColors = product.Colors,
-            PreviewImageURL = ProductImagePaths[index % ProductImagePaths.Length],
+            PreviewImageURL = previewImages[index],
             IsAvailable = true,
             StockStatus = product.StockStatus,
             AverageRating = product.Rating,
@@ -305,7 +304,84 @@ public static class DemoDataSeeder
         }).ToArray();
 
         await AddMissingAsync(context, context.Products, seeds, "products", logger);
+
+        var seedIds = seeds.Select(seed => seed.Id).ToArray();
+        var existingProducts = await context.Products.IgnoreQueryFilters()
+            .Where(product => seedIds.Contains(product.Id))
+            .ToListAsync();
+
+        foreach (var product in existingProducts)
+        {
+            var seed = seeds.Single(item => item.Id == product.Id);
+            product.CategoryId = seed.CategoryId;
+            product.Name = seed.Name;
+            product.BasePrice = seed.BasePrice;
+            product.AvailableColors = seed.AvailableColors;
+            product.PreviewImageURL = seed.PreviewImageURL;
+            product.IsAvailable = true;
+            product.StockStatus = seed.StockStatus;
+            product.AverageRating = seed.AverageRating;
+            product.ReviewCount = seed.ReviewCount;
+            product.IsDeleted = false;
+            product.DeletedAt = null;
+        }
+
+        await RepairLegacyProductRowsAsync(context, seedIds, logger);
+        await context.SaveChangesAsync();
         return seeds.Select(seed => seed.Id).ToArray();
+    }
+
+    private static async Task RepairLegacyProductRowsAsync(
+        AppDbContext context,
+        IReadOnlyList<Guid> canonicalProductIds,
+        ILogger logger)
+    {
+        var originalProductIds = Enumerable.Range(1, 12)
+            .Select(index => SeedId(3, index))
+            .ToArray();
+        var legacyProductIds = originalProductIds.Skip(3).ToArray();
+
+        Guid CanonicalProductId(Guid productId)
+        {
+            var originalIndex = Array.IndexOf(originalProductIds, productId);
+            return (originalIndex % ProductImagePaths.Length) switch
+            {
+                0 or 4 => canonicalProductIds[0],
+                1 or 5 => canonicalProductIds[1],
+                _ => canonicalProductIds[2]
+            };
+        }
+
+        var designs = await context.Designs
+            .Where(design => legacyProductIds.Contains(design.ProductId))
+            .ToListAsync();
+        foreach (var design in designs)
+        {
+            design.ProductId = CanonicalProductId(design.ProductId);
+        }
+
+        var cartItems = await context.CartItems
+            .Where(item => legacyProductIds.Contains(item.ProductId))
+            .ToListAsync();
+        foreach (var item in cartItems)
+        {
+            item.ProductId = CanonicalProductId(item.ProductId);
+        }
+
+        var legacyProducts = await context.Products.IgnoreQueryFilters()
+            .Where(product => legacyProductIds.Contains(product.Id))
+            .ToListAsync();
+        foreach (var product in legacyProducts)
+        {
+            product.IsDeleted = true;
+            product.DeletedAt ??= DateTime.UtcNow;
+        }
+
+        logger.LogInformation(
+            "Consolidated {ProductCount} legacy demo products; reassigned {DesignCount} designs and {CartItemCount} cart items.",
+            legacyProducts.Count,
+            designs.Count,
+            cartItems.Count);
     }
 
     private static async Task SeedProductImagesAsync(
@@ -313,24 +389,158 @@ public static class DemoDataSeeder
         IReadOnlyList<Guid> productIds,
         ILogger logger)
     {
-        var colors = new ProductAvailableColors?[]
+        var printableZone = "{\"left\":0.2,\"top\":0.16,\"width\":0.6,\"height\":0.62}";
+        var seeds = new[]
         {
-            ProductAvailableColors.Black, ProductAvailableColors.White, ProductAvailableColors.Blue,
-            ProductAvailableColors.Gray, ProductAvailableColors.Pink, ProductAvailableColors.Green
+            ProductImageSeed(SeedId(31, 1), productIds[0], ProductImagePaths[4], ProductAvailableColors.White, ViewAngle.Front, printableZone, true, 0),
+            ProductImageSeed(SeedId(32, 1), productIds[0], ProductImagePaths[0], ProductAvailableColors.White, ViewAngle.Back, printableZone, false, 1),
+            ProductImageSeed(SeedId(31, 2), productIds[1], ProductImagePaths[5], ProductAvailableColors.White, ViewAngle.Front, printableZone, true, 0),
+            ProductImageSeed(SeedId(32, 2), productIds[1], ProductImagePaths[1], ProductAvailableColors.White, ViewAngle.Back, printableZone, false, 1),
+            ProductImageSeed(SeedId(31, 3), productIds[2], ProductImagePaths[2], ProductAvailableColors.Black, ViewAngle.Front, printableZone, true, 0),
+            ProductImageSeed(SeedId(32, 3), productIds[2], ProductImagePaths[3], ProductAvailableColors.Black, ViewAngle.Back, printableZone, false, 1)
         };
-        var seeds = productIds.Select((productId, index) => new ProductImage
+
+        var legacyImageIds = Enumerable.Range(4, 9)
+            .Select(index => SeedId(31, index))
+            .ToArray();
+        var legacyImages = await context.ProductImages
+            .Where(image => legacyImageIds.Contains(image.Id))
+            .ToListAsync();
+        if (legacyImages.Count > 0)
         {
-            Id = SeedId(31, index + 1),
-            ProductId = productId,
-            ImageUrl = ProductImagePaths[index % ProductImagePaths.Length],
-            Color = colors[index % colors.Length],
-            ViewAngle = ViewAngle.Front,
-            PrintableZoneJson = "{\"left\":0.2,\"top\":0.16,\"width\":0.6,\"height\":0.62}",
-            IsPrimary = true,
-            DisplayOrder = 0
-        }).ToArray();
+            context.ProductImages.RemoveRange(legacyImages);
+            await context.SaveChangesAsync();
+        }
 
         await AddMissingAsync(context, context.ProductImages, seeds, "product images", logger);
+
+        var seedImageIds = seeds.Select(seed => seed.Id).ToArray();
+        var existingImages = await context.ProductImages
+            .Where(image => seedImageIds.Contains(image.Id))
+            .ToListAsync();
+        foreach (var image in existingImages)
+        {
+            var seed = seeds.Single(item => item.Id == image.Id);
+            image.ProductId = seed.ProductId;
+            image.ImageUrl = seed.ImageUrl;
+            image.Color = seed.Color;
+            image.ViewAngle = seed.ViewAngle;
+            image.PrintableZoneJson = seed.PrintableZoneJson;
+            image.IsPrimary = seed.IsPrimary;
+            image.DisplayOrder = seed.DisplayOrder;
+        }
+
+        await context.SaveChangesAsync();
+    }
+
+    private static ProductImage ProductImageSeed(
+        Guid id,
+        Guid productId,
+        string imageUrl,
+        ProductAvailableColors color,
+        ViewAngle viewAngle,
+        string printableZoneJson,
+        bool isPrimary,
+        int displayOrder) => new()
+        {
+            Id = id,
+            ProductId = productId,
+            ImageUrl = imageUrl,
+            Color = color,
+            ViewAngle = viewAngle,
+            PrintableZoneJson = printableZoneJson,
+            IsPrimary = isPrimary,
+            DisplayOrder = displayOrder
+        };
+
+    private static async Task EnsureProductForEveryCategoryAsync(
+        AppDbContext context,
+        ILogger logger)
+    {
+        var catalog = new[]
+        {
+            new CategoryProductSeed("Essential Tees", "Classic Essential Tee", 24m, ProductAvailableColors.White | ProductAvailableColors.Black, "assets/garment-tshirt-white.jpg", 4.54m, 128),
+            new CategoryProductSeed("Sweatshirts", "Heritage Crew Sweatshirt", 49m, ProductAvailableColors.White | ProductAvailableColors.Gray, "assets/garment-hoodie-cream.jpg", 4.61m, 82),
+            new CategoryProductSeed("Tote Bags", "Everyday Canvas Tote", 19m, ProductAvailableColors.White | ProductAvailableColors.Brown, "assets/template-botanical.jpg", 4.38m, 71),
+            new CategoryProductSeed("Caps", "Atelier Classic Cap", 27m, ProductAvailableColors.Black | ProductAvailableColors.White, "assets/garment-cap-black.jpg", 4.73m, 94),
+            new CategoryProductSeed("Jackets", "Studio Utility Jacket", 84m, ProductAvailableColors.Black | ProductAvailableColors.Gray, "assets/garment-hoodie-charcoal.jpg", 4.42m, 53),
+            new CategoryProductSeed("Kidswear", "Little Maker Tee", 21m, ProductAvailableColors.White | ProductAvailableColors.Blue | ProductAvailableColors.Pink, "assets/garment-tshirt-white.jpg", 4.66m, 61),
+            new CategoryProductSeed("Activewear", "Motion Training Pants", 44m, ProductAvailableColors.Green | ProductAvailableColors.Black, "assets/garment-pants-olive.jpg", 4.35m, 76),
+            new CategoryProductSeed("Accessories", "Everyday Runner Sneakers", 68m, ProductAvailableColors.White | ProductAvailableColors.Black, "assets/garment-sneakers.jpg", 4.58m, 109),
+            new CategoryProductSeed("Formal", "Tailored Olive Trousers", 72m, ProductAvailableColors.Green | ProductAvailableColors.Black, "assets/garment-pants-olive.jpg", 4.47m, 47)
+        };
+
+        var categories = await context.Categories
+            .Where(category => !category.IsDeleted)
+            .ToListAsync();
+        var coveredCategoryIds = await context.Products
+            .Where(product => !product.IsDeleted)
+            .Select(product => product.CategoryId)
+            .Distinct()
+            .ToListAsync();
+        var coveredCategories = coveredCategoryIds.ToHashSet();
+        var createdCount = 0;
+
+        for (var index = 0; index < catalog.Length; index++)
+        {
+            var productSeed = catalog[index];
+            var category = categories.FirstOrDefault(item =>
+                item.Name.Equals(productSeed.CategoryName, StringComparison.OrdinalIgnoreCase));
+
+            if (category is null || coveredCategories.Contains(category.Id))
+            {
+                continue;
+            }
+
+            var productId = SeedId(33, index + 1);
+            var product = await context.Products.IgnoreQueryFilters()
+                .FirstOrDefaultAsync(item => item.Id == productId);
+
+            if (product is null)
+            {
+                product = new Product { Id = productId };
+                context.Products.Add(product);
+                createdCount++;
+            }
+
+            product.CategoryId = category.Id;
+            product.Name = productSeed.Name;
+            product.BasePrice = productSeed.Price;
+            product.AvailableColors = productSeed.Colors;
+            product.PreviewImageURL = productSeed.PreviewImageUrl;
+            product.IsAvailable = true;
+            product.StockStatus = "In stock";
+            product.AverageRating = productSeed.Rating;
+            product.ReviewCount = productSeed.Reviews;
+            product.IsDeleted = false;
+            product.DeletedAt = null;
+            product.CreatedAt = DateTime.UtcNow.AddDays(-(20 - index));
+
+            var productImageId = SeedId(34, index + 1);
+            var productImage = await context.ProductImages
+                .FirstOrDefaultAsync(image => image.Id == productImageId);
+
+            if (productImage is null)
+            {
+                productImage = new ProductImage { Id = productImageId };
+                context.ProductImages.Add(productImage);
+            }
+
+            productImage.ProductId = productId;
+            productImage.ImageUrl = productSeed.PreviewImageUrl;
+            productImage.Color = productSeed.Colors;
+            productImage.ViewAngle = ViewAngle.Front;
+            productImage.PrintableZoneJson = "{\"left\":0.2,\"top\":0.16,\"width\":0.6,\"height\":0.62}";
+            productImage.IsPrimary = true;
+            productImage.DisplayOrder = 0;
+
+            coveredCategories.Add(category.Id);
+        }
+
+        await context.SaveChangesAsync();
+        logger.LogInformation(
+            "Added {Count} demo product(s) to categories that previously had no products.",
+            createdCount);
     }
 
     private static async Task<IReadOnlyList<Guid>> SeedTemplatesAsync(
@@ -634,6 +844,15 @@ public static class DemoDataSeeder
         decimal Rating,
         int Reviews,
         string StockStatus);
+
+    private sealed record CategoryProductSeed(
+        string CategoryName,
+        string Name,
+        decimal Price,
+        ProductAvailableColors Colors,
+        string PreviewImageUrl,
+        decimal Rating,
+        int Reviews);
 
     private sealed record TemplateSeed(
         string Name,

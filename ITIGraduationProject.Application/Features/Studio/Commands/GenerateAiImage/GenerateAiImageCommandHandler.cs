@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System.Net;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -19,7 +20,9 @@ namespace ITIGraduationProject.Application.Features.Studio.Commands.GenerateAiIm
         // The LangFlow flow ID for AI image generation (Design Studio).
         // This is the fixed flow ID provided in the task specification.
         // -----------------------------------------------------------------------
-        private const string DefaultImageFlowId = "bb7fdffd-50aa-4d89-8942-a6faaac93c31";
+        private const string DefaultImageFlowId = "e417743a-b5ee-4a7b-85b7-9d46395415a1";
+        private const int MaxLangFlowAttempts = 4;
+        private static readonly SemaphoreSlim LangFlowGenerationGate = new(1, 1);
 
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IConfiguration _configuration;
@@ -82,36 +85,12 @@ namespace ITIGraduationProject.Application.Features.Studio.Commands.GenerateAiIm
             using var langFlowClient = _httpClientFactory.CreateClient();
             langFlowClient.Timeout = TimeSpan.FromSeconds(300);
 
-            using var langFlowRequest = new HttpRequestMessage(HttpMethod.Post, flowEndpoint);
-            langFlowRequest.Headers.Add("x-api-key", apiKey);
-            langFlowRequest.Content = new StringContent(
+            var rawResponse = await SendLangFlowWithRetryAsync(
+                langFlowClient,
+                flowEndpoint,
+                apiKey,
                 JsonSerializer.Serialize(langFlowPayload),
-                Encoding.UTF8,
-                "application/json");
-
-            HttpResponseMessage langFlowResponse;
-            try
-            {
-                langFlowResponse = await langFlowClient.SendAsync(langFlowRequest, cancellationToken);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "[GenerateAiImage] LangFlow is unreachable at {Endpoint}", flowEndpoint);
-                throw new InvalidOperationException("LangFlow service is currently unavailable. Please try again later.", ex);
-            }
-
-            if (!langFlowResponse.IsSuccessStatusCode)
-            {
-                var errorBody = await langFlowResponse.Content.ReadAsStringAsync(cancellationToken);
-                _logger.LogError(
-                    "[GenerateAiImage] LangFlow returned {StatusCode}: {Body}",
-                    (int)langFlowResponse.StatusCode, errorBody);
-
-                throw new InvalidOperationException(
-                    $"LangFlow returned an error ({(int)langFlowResponse.StatusCode}). Check server logs for details.");
-            }
-
-            var rawResponse = await langFlowResponse.Content.ReadAsStringAsync(cancellationToken);
+                cancellationToken);
             _logger.LogDebug("[GenerateAiImage] LangFlow raw response received (length={Len})", rawResponse.Length);
 
             // ---------------------------------------------------------------
@@ -247,6 +226,89 @@ namespace ITIGraduationProject.Application.Features.Studio.Commands.GenerateAiIm
         // -------------------------------------------------------------------
         // Helpers
         // -------------------------------------------------------------------
+
+        private async Task<string> SendLangFlowWithRetryAsync(
+            HttpClient client,
+            string endpoint,
+            string apiKey,
+            string payloadJson,
+            CancellationToken cancellationToken)
+        {
+            await LangFlowGenerationGate.WaitAsync(cancellationToken);
+
+            try
+            {
+                for (var attempt = 1; attempt <= MaxLangFlowAttempts; attempt++)
+                {
+                    using var request = new HttpRequestMessage(HttpMethod.Post, endpoint);
+                    request.Headers.Add("x-api-key", apiKey);
+                    request.Content = new StringContent(payloadJson, Encoding.UTF8, "application/json");
+
+                    HttpResponseMessage response;
+                    try
+                    {
+                        response = await client.SendAsync(request, cancellationToken);
+                    }
+                    catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                    {
+                        throw;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "[GenerateAiImage] LangFlow is unreachable at {Endpoint}", endpoint);
+                        throw new InvalidOperationException(
+                            "LangFlow service is currently unavailable. Please try again later.", ex);
+                    }
+
+                    using (response)
+                    {
+                        var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+                        if (response.IsSuccessStatusCode)
+                        {
+                            return responseBody;
+                        }
+
+                        var isRateLimited = IsRateLimitResponse(response.StatusCode, responseBody);
+                        if (isRateLimited && attempt < MaxLangFlowAttempts)
+                        {
+                            var retryDelay = TimeSpan.FromSeconds(Math.Pow(2, attempt));
+                            _logger.LogWarning(
+                                "[GenerateAiImage] Mistral rate limit detected. Retrying attempt {NextAttempt} in {DelaySeconds}s.",
+                                attempt + 1,
+                                retryDelay.TotalSeconds);
+                            await Task.Delay(retryDelay, cancellationToken);
+                            continue;
+                        }
+
+                        _logger.LogError(
+                            "[GenerateAiImage] LangFlow returned {StatusCode}: {Body}",
+                            (int)response.StatusCode,
+                            responseBody);
+
+                        if (isRateLimited)
+                        {
+                            throw new InvalidOperationException(
+                                "The AI image provider is rate limited after several retries. Please wait briefly and try again.");
+                        }
+
+                        throw new InvalidOperationException(
+                            $"LangFlow returned an error ({(int)response.StatusCode}). Check server logs for details.");
+                    }
+                }
+
+                throw new InvalidOperationException("LangFlow image generation did not complete.");
+            }
+            finally
+            {
+                LangFlowGenerationGate.Release();
+            }
+        }
+
+        private static bool IsRateLimitResponse(HttpStatusCode statusCode, string responseBody) =>
+            statusCode == HttpStatusCode.TooManyRequests ||
+            responseBody.Contains("rate limit", StringComparison.OrdinalIgnoreCase) ||
+            responseBody.Contains("rate_limited", StringComparison.OrdinalIgnoreCase) ||
+            responseBody.Contains("raw_status_code\\\":429", StringComparison.OrdinalIgnoreCase);
 
         /// <summary>
         /// Parses the LangFlow response JSON and returns the first valid, unique image URL.

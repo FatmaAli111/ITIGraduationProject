@@ -37,31 +37,56 @@ public class AILayerClient : IAILayerClient
 
         response.EnsureSuccessStatusCode();
         var raw = await response.Content.ReadAsStringAsync(ct);
-        var root = JsonDocument.Parse(raw).RootElement;
+        using var document = JsonDocument.Parse(raw);
+        var root = document.RootElement;
 
+        if (!root.TryGetProperty("outputs", out var outerOutputs) ||
+            outerOutputs.ValueKind != JsonValueKind.Array ||
+            outerOutputs.GetArrayLength() == 0 ||
+            !outerOutputs[0].TryGetProperty("outputs", out var innerOutputs) ||
+            innerOutputs.ValueKind != JsonValueKind.Array)
+        {
+            throw new InvalidOperationException("AI layer response did not contain an outputs array.");
+        }
 
-        // Step 1: navigate to the actual response shape
-        var innerText = root
-            .GetProperty("outputs")[0]
-            .GetProperty("outputs")[0]
-            .GetProperty("results")
-            .GetProperty("message")
-            .GetProperty("text")
-            .GetString();
+        foreach (var output in innerOutputs.EnumerateArray())
+        {
+            if (!output.TryGetProperty("results", out var results) ||
+                !results.TryGetProperty("message", out var messageResult) ||
+                !messageResult.TryGetProperty("text", out var textResult))
+            {
+                continue;
+            }
 
-        if (string.IsNullOrWhiteSpace(innerText))
-            throw new Exception("AI layer returned empty response");
+            var text = textResult.GetString();
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                continue;
+            }
 
-        // Step 2: strip the ```json ... ``` markdown fence
-        var cleaned = innerText
-            .Replace("```json", "")
-            .Replace("```", "")
-            .Trim();
+            var cleaned = text
+                .Replace("```json", "", StringComparison.OrdinalIgnoreCase)
+                .Replace("```", "")
+                .Trim();
 
-        // Step 3: parse the inner JSON to get the actual image URL
-        var innerJson = JsonDocument.Parse(cleaned).RootElement;
-        var imageUrl = innerJson.GetProperty("url").GetString();
+            try
+            {
+                using var innerDocument = JsonDocument.Parse(cleaned);
+                if (innerDocument.RootElement.TryGetProperty("url", out var urlProperty))
+                {
+                    var imageUrl = urlProperty.GetString();
+                    if (!string.IsNullOrWhiteSpace(imageUrl))
+                    {
+                        return imageUrl;
+                    }
+                }
+            }
+            catch (JsonException)
+            {
+                // This output is narrative text rather than the image result.
+            }
+        }
 
-        return imageUrl ?? throw new Exception("AI layer returned no image URL");
+        throw new InvalidOperationException("AI layer returned no image URL.");
     }
 }
